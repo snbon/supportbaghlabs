@@ -15,6 +15,10 @@ export default async function SuperadminDashboard() {
     .order("company_name");
 
   const safeProfiles: Profile[] = profiles || [];
+
+  // Fetch auth users to get email + verification status
+  const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+
   let projects: Project[] = [];
   let tickets: Ticket[] = [];
 
@@ -39,11 +43,14 @@ export default async function SuperadminDashboard() {
   const clients: ClientWithStats[] = safeProfiles.map((profile) => {
     const cp = projects.filter((p) => p.client_id === profile.id);
     const ct = tickets.filter((t) => cp.some((p) => p.id === t.project_id));
+    const authUser = authUsers?.find((u) => u.id === profile.id);
     return {
       profile,
       projects: cp,
       openTicketCount: ct.filter((t) => t.status === "open").length,
       totalTicketCount: ct.length,
+      emailVerified: !!authUser?.email_confirmed_at,
+      email: authUser?.email ?? "",
     };
   });
 
@@ -51,10 +58,10 @@ export default async function SuperadminDashboard() {
   const totalClosed = tickets.filter((t) => t.status === "closed").length;
 
   const stats = [
-    { label: "Clients",        value: safeProfiles.length, sub: "active",   dot: "bg-indigo-500"  },
+    { label: "Clients",        value: safeProfiles.length, sub: "active",   dot: "bg-[#141f59]"  },
     { label: "Open tickets",   value: totalOpen,            sub: "pending",  dot: "bg-emerald-500" },
     { label: "Closed tickets", value: totalClosed,          sub: "resolved", dot: "bg-slate-400"   },
-    { label: "Projects",       value: projects.length,      sub: "total",    dot: "bg-violet-500"  },
+    { label: "Projects",       value: projects.length,      sub: "total",    dot: "bg-[#141f59]/70"  },
   ];
 
   return (
@@ -148,7 +155,7 @@ export default async function SuperadminDashboard() {
 /* ── Icon components (inline SVG avoids extra deps) ──────────── */
 function BrandIcon() {
   return (
-    <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
+    <div className="w-7 h-7 rounded-lg bg-[#141f59] flex items-center justify-center shrink-0">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
         <path d="M2 4h12M2 8h8M2 12h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>

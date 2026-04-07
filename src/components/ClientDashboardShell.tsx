@@ -13,9 +13,10 @@ interface Props {
   projects: Project[];
   tickets: Ticket[];
   initialProjectId: string;
+  emailVerified: boolean;
 }
 
-export default function ClientDashboardShell({ projects, tickets, initialProjectId }: Props) {
+export default function ClientDashboardShell({ projects, tickets, initialProjectId, emailVerified }: Props) {
   const router = useRouter();
   const [activeProjectId, setActiveProjectId] = useState(initialProjectId);
   const [selectedTicket, setSelectedTicket]   = useState<Ticket | null>(null);
@@ -48,6 +49,7 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
             <CreateTicketForm
               projectId={activeProjectId}
               projectName={activeProject?.project_name}
+              disabled={!emailVerified}
             />
           </div>
           <div className="w-full min-w-0 animate-fade-up stagger-3">

@@ -12,6 +12,10 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "BaghLabs Support Portal",
   description: "Client support ticketing portal for Baghlabs projects.",
+  icons: {
+    icon: "/brand/b_black.png",
+    apple: "/brand/b_black.png",
+  },
 };
 
 export const viewport: Viewport = {

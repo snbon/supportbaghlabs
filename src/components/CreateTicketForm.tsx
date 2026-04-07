@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label";
 interface CreateTicketFormProps {
   projectId: string;
   projectName?: string;
+  disabled?: boolean;
 }
 
 const initialState: TicketState = {};
 
-export default function CreateTicketForm({ projectId, projectName }: CreateTicketFormProps) {
+export default function CreateTicketForm({ projectId, projectName, disabled }: CreateTicketFormProps) {
   const [state, formAction, isPending] = useActionState(submitTicket, initialState);
   const [formKey, setFormKey] = useState(0);
 
@@ -23,7 +24,7 @@ export default function CreateTicketForm({ projectId, projectName }: CreateTicke
   }, [state.success]);
 
   return (
-    <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
+    <div className={`bg-card border border-border/60 rounded-2xl overflow-hidden${disabled ? " opacity-60 pointer-events-none select-none" : ""}`}>
       {/* Header */}
       <div className="px-5 py-4 border-b border-border/60">
         <h3 className="font-semibold text-sm text-foreground">New ticket</h3>

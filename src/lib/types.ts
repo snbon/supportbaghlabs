@@ -39,4 +39,6 @@ export interface ClientWithStats {
   projects: Project[];
   openTicketCount: number;
   totalTicketCount: number;
+  emailVerified: boolean;
+  email: string;
 }

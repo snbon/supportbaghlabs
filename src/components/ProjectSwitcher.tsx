@@ -24,7 +24,7 @@ export default function ProjectSwitcher({ projects, activeProjectId, onProjectCh
     <div className="flex items-center gap-2.5 animate-fade-up">
       <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Project</span>
       <Select value={activeProjectId} onValueChange={(v) => v !== null && onProjectChange(v)}>
-        <SelectTrigger className="w-auto min-w-44 max-w-xs h-9 bg-card border-border/80 hover:border-indigo-300 transition-colors">
+        <SelectTrigger className="w-auto min-w-44 max-w-xs h-9 bg-card border-border/80 hover:border-[#BCCCDC] transition-colors">
           {/* Bypass SelectValue — Base UI renders the raw value string, not the item label */}
           <span className="flex-1 text-left text-sm font-semibold truncate text-foreground">{activeLabel}</span>
         </SelectTrigger>

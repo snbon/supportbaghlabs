@@ -35,8 +35,8 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
     <button
       onClick={onClick}
       className="w-full text-left group bg-card border border-border/60 rounded-2xl px-4 py-3.5
-        hover:border-indigo-200 hover:shadow-sm active:scale-[0.995]
-        transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        hover:border-[#BCCCDC] hover:shadow-sm active:scale-[0.995]
+        transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9EAFD]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
@@ -44,7 +44,7 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
             <StatusDot status={ticket.status} />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm text-foreground leading-snug line-clamp-1 group-hover:text-indigo-600 transition-colors">
+            <p className="font-semibold text-sm text-foreground leading-snug line-clamp-1 group-hover:text-[#141f59] transition-colors">
               {ticket.title}
             </p>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed line-clamp-2">
@@ -59,7 +59,7 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
           </Badge>
           {/* Chevron affordance */}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            className="text-muted-foreground/40 group-hover:text-indigo-400 transition-colors mt-0.5 shrink-0">
+            className="text-muted-foreground/40 group-hover:text-[#141f59]/50 transition-colors mt-0.5 shrink-0">
             <path d="M9 18l6-6-6-6"/>
           </svg>
         </div>

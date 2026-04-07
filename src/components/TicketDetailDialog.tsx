@@ -261,7 +261,7 @@ function TimelineItem({
           <img src={avatar} alt={author} className="w-7 h-7 rounded-full border border-border/60" />
         ) : (
           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold
-            ${isSystem ? "bg-indigo-100 text-indigo-700" : "bg-muted text-muted-foreground"}`}>
+            ${isSystem ? "bg-[#D9EAFD] text-[#141f59]" : "bg-muted text-muted-foreground"}`}>
             {isSystem ? "★" : author.slice(0, 2).toUpperCase()}
           </div>
         )}
@@ -274,7 +274,7 @@ function TimelineItem({
           {time && <span className="text-[11px] text-muted-foreground">{timeAgo(time)}</span>}
         </div>
         <div className={`text-sm leading-relaxed rounded-xl px-3.5 py-2.5
-          ${isSystem ? "bg-indigo-50 text-indigo-800 text-xs font-semibold" : "bg-muted/50 text-foreground"}`}>
+          ${isSystem ? "bg-[#D9EAFD]/60 text-[#141f59] text-xs font-semibold" : "bg-muted/50 text-foreground"}`}>
           {body}
         </div>
       </div>

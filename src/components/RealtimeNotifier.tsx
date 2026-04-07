@@ -107,18 +107,18 @@ export default function RealtimeNotifier({ projectIds, initialTickets }: Realtim
     >
       <div className="bg-[var(--sidebar)] border border-white/10 text-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Progress bar that drains over 7s */}
-        <div className="h-0.5 bg-indigo-500/40">
+        <div className="h-0.5 bg-white/20">
           <div
             key={notification.id}
-            className="h-full bg-indigo-400 origin-left"
+            className="h-full bg-white/60 origin-left"
             style={{ animation: "drain 7s linear forwards" }}
           />
         </div>
 
         <div className="px-4 py-3.5 flex items-start gap-3">
           {/* Bell icon */}
-          <div className="w-8 h-8 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0 mt-0.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-300">
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/60">
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
             </svg>
           </div>
@@ -129,7 +129,7 @@ export default function RealtimeNotifier({ projectIds, initialTickets }: Realtim
             <ul className="mt-1 space-y-0.5">
               {notification.changes.map((c, i) => (
                 <li key={i} className="text-xs text-white/70 flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-indigo-400 shrink-0" />
+                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
                   {c}
                 </li>
               ))}

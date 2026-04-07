@@ -31,8 +31,8 @@ export default function ClientDetailDialog({ open, onOpenChange, profile, projec
         <DialogHeader>
           <div className="flex items-start justify-between gap-4 pr-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-indigo-700">{initials}</span>
+              <div className="w-10 h-10 rounded-full bg-[#D9EAFD] flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-[#141f59]">{initials}</span>
               </div>
               <div>
                 <DialogTitle className="text-base">{profile.company_name}</DialogTitle>

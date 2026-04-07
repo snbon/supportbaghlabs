@@ -9,14 +9,7 @@ export interface CommentState {
 }
 
 /**
- * postComment — posts a comment (with optional file attachments) to the
- * GitHub issue linked to a ticket.
- *
- * Flow:
- * 1. Verify the caller is authenticated and owns the project
- * 2. Upload any attached files to Supabase Storage
- * 3. Build the GitHub comment body (markdown, with embedded images / PDF links)
- * 4. POST the comment to the GitHub Issues API
+ * postComment — posts a text comment to the GitHub issue linked to a ticket.
  */
 export async function postComment(
   _prevState: CommentState,
@@ -30,16 +23,13 @@ export async function postComment(
   const githubRepo = formData.get("githubRepo")  as string;
   const issueNum   = formData.get("issueNumber") as string;
   const body       = (formData.get("body") as string)?.trim();
-  const files      = formData.getAll("files") as File[];
 
-  if (!body && files.filter((f) => f.size > 0).length === 0) {
-    return { error: "Please write a comment or attach a file." };
-  }
+  if (!body) return { error: "Please write a comment before sending." };
   if (!githubRepo || !issueNum) {
     return { error: "This ticket is not linked to a GitHub issue yet." };
   }
 
-  // Verify the user owns the ticket (security check)
+  // Verify the user owns the ticket
   const admin = createAdminClient();
   const { data: ticket } = await admin
     .from("tickets")
@@ -57,49 +47,6 @@ export async function postComment(
 
   if (project?.client_id !== user.id) return { error: "Unauthorized." };
 
-  // Upload files and collect markdown snippets
-  const validFiles = files.filter((f) => f.size > 0);
-  const attachmentLines: string[] = [];
-
-  for (const file of validFiles) {
-    const ext      = file.name.split(".").pop()?.toLowerCase() ?? "";
-    const safeName = `${ticketId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-
-    const arrayBuf = await file.arrayBuffer();
-    const { data: uploadData, error: uploadError } = await admin
-      .storage
-      .from("ticket-attachments")
-      .upload(safeName, arrayBuf, { contentType: file.type, upsert: false });
-
-    if (uploadError) {
-      console.error("File upload error:", uploadError);
-      continue; // skip failed file, don't abort the whole comment
-    }
-
-    const { data: { publicUrl } } = admin
-      .storage
-      .from("ticket-attachments")
-      .getPublicUrl(uploadData.path);
-
-    if (["jpg", "jpeg", "png"].includes(ext)) {
-      // Embed images inline in the comment
-      attachmentLines.push(`![${file.name}](${publicUrl})`);
-    } else {
-      // PDFs as a link
-      attachmentLines.push(`📎 [${file.name}](${publicUrl})`);
-    }
-  }
-
-  // Build the final GitHub comment body
-  const parts: string[] = [];
-  if (body) parts.push(body);
-  if (attachmentLines.length > 0) {
-    if (body) parts.push("\n---");
-    parts.push(...attachmentLines);
-  }
-  const commentBody = parts.join("\n");
-
-  // Post to GitHub
   const ghRes = await fetch(
     `https://api.github.com/repos/${githubRepo}/issues/${issueNum}/comments`,
     {
@@ -110,7 +57,7 @@ export async function postComment(
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ body: commentBody }),
+      body: JSON.stringify({ body }),
     }
   );
 

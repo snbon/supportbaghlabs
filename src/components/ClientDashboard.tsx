@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Profile, Project, Ticket } from "@/lib/types";
 import ClientDashboardShell from "@/components/ClientDashboardShell";
+import VerificationBanner from "@/components/VerificationBanner";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +12,11 @@ interface ClientDashboardProps {
 
 export default async function ClientDashboard({ userId, defaultProjectId }: ClientDashboardProps) {
   const supabase = createAdminClient();
+
+  // Check if the user's email is verified
+  const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId);
+  const emailVerified = !!authUser?.email_confirmed_at;
+  const userEmail = authUser?.email ?? "";
 
   const { data: profile } = await supabase
     .from("profiles").select("*").eq("id", userId).single<Profile>();
@@ -46,7 +52,7 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
       <header className="sticky top-0 z-20 bg-card/95 border-b border-border/60 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-[#141f59] flex items-center justify-center shrink-0">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4h12M2 8h8M2 12h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
@@ -56,8 +62,8 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center">
-              <span className="text-[10px] font-extrabold text-indigo-700">{initials}</span>
+            <div className="w-7 h-7 rounded-full bg-[#D9EAFD] flex items-center justify-center">
+              <span className="text-[10px] font-extrabold text-[#141f59]">{initials}</span>
             </div>
             <form action={logout}>
               <Button variant="ghost" size="sm" type="submit" className="text-muted-foreground text-xs">
@@ -69,6 +75,7 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
       </header>
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6">
+        {!emailVerified && <VerificationBanner email={userEmail} />}
         {safeProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center animate-fade-up px-4">
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-5">
@@ -104,6 +111,7 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
               projects={safeProjects}
               tickets={tickets}
               initialProjectId={validProjectId}
+              emailVerified={emailVerified}
             />
           </>
         )}
