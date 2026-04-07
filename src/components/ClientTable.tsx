@@ -88,10 +88,13 @@ export default function ClientTable({ clients, allTickets }: ClientTableProps) {
       {/* ── Mobile card list ──────────────────────────────────── */}
       <div className="sm:hidden space-y-3">
         {clients.map((c) => (
-          <button
+          <div
             key={c.profile.id}
+            role="button"
+            tabIndex={0}
             onClick={() => setSelected(c)}
-            className="w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-[#BCCCDC] active:scale-[0.99] transition-all"
+            onKeyDown={(e) => e.key === "Enter" && setSelected(c)}
+            className="w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-[#BCCCDC] active:scale-[0.99] transition-all cursor-pointer"
           >
             <Initials name={c.profile.company_name} />
             <div className="flex-1 min-w-0">
@@ -115,7 +118,7 @@ export default function ClientTable({ clients, allTickets }: ClientTableProps) {
               )}
               {!c.emailVerified && <ResendButton email={c.email} />}
             </div>
-          </button>
+          </div>
         ))}
       </div>
 

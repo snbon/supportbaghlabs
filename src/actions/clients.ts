@@ -34,23 +34,25 @@ export async function inviteClient(
 ): Promise<ClientActionState> {
   const adminSupabase = createAdminClient();
 
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+  const email       = formData.get("email")       as string;
   const companyName = formData.get("companyName") as string;
   const projectName = formData.get("projectName") as string;
-  const githubRepo = formData.get("githubRepo") as string;
+  const githubRepo  = formData.get("githubRepo")  as string;
 
-  if (!email || !password || !companyName || !projectName || !githubRepo) {
+  if (!email || !companyName || !projectName || !githubRepo) {
     return { error: "All fields are required." };
   }
 
-  // Step 1: Create the auth user using the admin API
-  // email_confirm: true skips the confirmation email (we send our own)
+  // Step 1: Create the auth user using the admin API.
+  // We generate a random internal password — the user will set their own via
+  // the setup link. email_confirm is intentionally left false; it gets set to
+  // true only after the user completes the password-setup flow.
+  const tempPassword = crypto.randomUUID() + crypto.randomUUID();
   const { data: userData, error: createUserError } =
     await adminSupabase.auth.admin.createUser({
       email,
-      password,
-      email_confirm: true,
+      password: tempPassword,
+      email_confirm: false,
     });
 
   if (createUserError || !userData.user) {
@@ -89,22 +91,48 @@ export async function inviteClient(
   // Import any existing GitHub issues into the tickets table (best-effort)
   await importGitHubIssues(adminSupabase, projectData.id, githubRepo);
 
-  // Step 4: Send the invitation email via Resend
+  // Step 4: Generate a one-time setup link and send it via Resend.
+  // Using type 'recovery' so the email_confirmed_at is NOT set on click —
+  // it gets set only after the user successfully saves their password.
   const portalUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://support.baghlabs.com";
-  const emailSent = await sendInvitationEmail({ email, companyName, password, portalUrl, projectName });
+  const { data: linkData, error: linkError } = await adminSupabase.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo: `${portalUrl}/auth/callback?next=/set-password` },
+  });
 
-  if (!emailSent) {
+  if (linkError || !linkData.properties?.action_link) {
+    console.error("generateLink error:", linkError);
     revalidatePath("/");
     return {
       success: true,
-      message: "Client created successfully but invitation email failed to send. Use 'Resend Invitation' from their dashboard.",
+      message: "Client created but setup link generation failed. Use 'Resend Invitation' from their dashboard.",
     };
   }
 
+  // Use hashed_token (not action_link) so our own callback route handles the
+  // OTP exchange via verifyOtp — avoids PKCE/implicit flow mismatches.
+  const setupLink = `${portalUrl}/auth/callback?token_hash=${linkData.properties.hashed_token}&type=recovery&next=/set-password`;
+
+  const emailSent = await sendInvitationEmail({
+    email,
+    companyName,
+    setupLink,
+    portalUrl,
+    projectName,
+  });
+
   revalidatePath("/");
+  if (!emailSent) {
+    return {
+      success: true,
+      message: `Client created but email failed to send (check server logs for Resend error). Use 'Resend setup email' from their row.`,
+    };
+  }
+
   return {
     success: true,
-    message: `${companyName} has been invited. They'll receive an email at ${email}.`,
+    message: `${companyName} has been invited. Setup email sent to ${email}.`,
   };
 }
 
@@ -172,13 +200,30 @@ export async function resendInvitation(
 
   const portalUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://support.baghlabs.com";
 
-  // Send a portal access reminder (no password — they already have one)
+  // Generate a fresh setup link for them
+  const { data: linkData, error: linkError } = await adminSupabase.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo: `${portalUrl}/auth/callback?next=/set-password` },
+  });
+
+  if (linkError || !linkData?.properties?.action_link) {
+    console.error("generateLink error:", linkError);
+    return { error: "Could not generate a setup link. Please try again." };
+  }
+
+  const setupLink = `${portalUrl}/auth/callback?token_hash=${linkData.properties.hashed_token}&type=recovery&next=/set-password`;
+
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { error: sendError } = await resend.emails.send({
     from: "Baghlabs Support <support@baghlabs.com>",
     to: email,
-    subject: `Access your Baghlabs Support Portal — ${profile?.company_name ?? ""}`,
-    html: buildReminderEmail({ companyName: profile?.company_name ?? email, email, portalUrl }),
+    subject: `Set up your Baghlabs Support Portal account — ${profile?.company_name ?? ""}`,
+    html: buildReminderEmail({
+      companyName: profile?.company_name ?? email,
+      email,
+      setupLink,
+    }),
   });
 
   if (sendError) {
@@ -186,7 +231,7 @@ export async function resendInvitation(
     return { error: "Failed to send email. Please try again." };
   }
 
-  return { success: true, message: "Invitation email sent." };
+  return { success: true, message: "Setup email sent." };
 }
 
 // ─── GitHub Import ─────────────────────────────────────────────────────────────
@@ -252,20 +297,20 @@ async function importGitHubIssues(supabase: any, projectId: string, githubRepo: 
 async function sendInvitationEmail(params: {
   email: string;
   companyName: string;
-  password: string;
+  setupLink: string;
   portalUrl: string;
   projectName: string;
 }): Promise<boolean> {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: "Baghlabs Support <support@baghlabs.com>",
       to: params.email,
       subject: `Welcome to the Baghlabs Support Portal — ${params.companyName}`,
       html: buildInvitationEmail(params),
     });
     if (error) {
-      console.error("Resend email error:", error);
+      console.error("Resend email error:", JSON.stringify(error));
       return false;
     }
     return true;
@@ -281,11 +326,11 @@ async function sendInvitationEmail(params: {
 function buildInvitationEmail(params: {
   companyName: string;
   email: string;
-  password: string;
+  setupLink: string;
   portalUrl: string;
   projectName: string;
 }): string {
-  const { companyName, email, password, portalUrl, projectName } = params;
+  const { companyName, email, setupLink, projectName } = params;
 
   return `
 <!DOCTYPE html>
@@ -314,22 +359,19 @@ function buildInvitationEmail(params: {
           <tr>
             <td style="padding:40px;">
               <h2 style="margin:0 0 16px;color:#0f172a;font-size:20px;">
-                Welcome, ${companyName}! 👋
+                Welcome, ${companyName}!
               </h2>
               <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.6;">
                 Your support portal account has been set up and is ready to use.
-                You can now submit tickets, track their progress, and communicate
-                with our team — all in one place.
+                Click the button below to set your password and access your portal.
               </p>
 
-              <!-- Credentials Box -->
+              <!-- Login info -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
                 <tr>
-                  <td style="padding:24px;">
-                    <p style="margin:0 0 4px;color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your Login Credentials</p>
-                    <p style="margin:0 0 12px;color:#0f172a;font-size:14px;"><strong>Email:</strong> ${email}</p>
-                    <p style="margin:0 0 16px;color:#0f172a;font-size:14px;"><strong>Temporary Password:</strong> <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;font-family:monospace;">${password}</code></p>
-                    <p style="margin:0;color:#64748b;font-size:13px;">⚠️ Please change your password after your first login.</p>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 4px;color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your login email</p>
+                    <p style="margin:0;color:#0f172a;font-size:14px;font-weight:600;">${email}</p>
                   </td>
                 </tr>
               </table>
@@ -343,13 +385,17 @@ function buildInvitationEmail(params: {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">
                 <tr>
                   <td align="center">
-                    <a href="${portalUrl}"
+                    <a href="${setupLink}"
                        style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;">
-                      Access Your Support Portal →
+                      Set your password &amp; get started →
                     </a>
                   </td>
                 </tr>
               </table>
+
+              <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;">
+                This link expires in 24 hours. If it has expired, you can request a new one from the login page.
+              </p>
             </td>
           </tr>
 
@@ -371,20 +417,20 @@ function buildInvitationEmail(params: {
   `.trim();
 }
 
-/** Builds a styled HTML reminder email (no password — just portal link). */
+/** Builds a styled HTML resend email with a fresh setup link. */
 function buildReminderEmail(params: {
   companyName: string;
   email: string;
-  portalUrl: string;
+  setupLink: string;
 }): string {
-  const { companyName, email, portalUrl } = params;
+  const { companyName, email, setupLink } = params;
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Access Your Support Portal</title>
+  <title>Set up your Support Portal account</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:40px 20px;">
@@ -401,22 +447,25 @@ function buildReminderEmail(params: {
           <tr>
             <td style="padding:40px;">
               <h2 style="margin:0 0 16px;color:#0f172a;font-size:20px;">
-                Hi ${companyName} 👋
+                Hi ${companyName}
               </h2>
               <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.6;">
-                Here's your access link to the Baghlabs Support Portal. Sign in with your email
-                <strong>${email}</strong> and the password we set for you.
+                Here is a fresh link to set up your password for the Baghlabs Support Portal.
+                Your login email is <strong>${email}</strong>.
               </p>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
                 <tr>
                   <td align="center">
-                    <a href="${portalUrl}"
+                    <a href="${setupLink}"
                        style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;">
-                      Access Your Support Portal →
+                      Set your password &amp; get started →
                     </a>
                   </td>
                 </tr>
               </table>
+              <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;text-align:center;">
+                This link expires in 24 hours.
+              </p>
             </td>
           </tr>
           <tr>

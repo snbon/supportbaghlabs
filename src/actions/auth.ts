@@ -10,6 +10,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Shape returned from the login action to the form component. */
 export interface AuthState {
@@ -53,6 +54,41 @@ export async function login(
 export async function logout(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  revalidatePath("/");
+  redirect("/");
+}
+
+/**
+ * Set a new password for the currently logged-in user (first-time setup).
+ * After the password is saved, the user's email is marked as confirmed so they
+ * show as "verified" in both the client dashboard and superadmin panel.
+ */
+export async function setPassword(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const password = formData.get("password") as string;
+  const confirm  = formData.get("confirm")  as string;
+
+  if (!password || password.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+  if (password !== confirm) {
+    return { error: "Passwords do not match." };
+  }
+
+  const supabase = await createClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { error: "Session expired. Please use your invite link again." };
+
+  // Update the password
+  const { error: updateError } = await supabase.auth.updateUser({ password });
+  if (updateError) return { error: updateError.message };
+
+  // Mark email as confirmed — this is what makes them "verified"
+  const adminSupabase = createAdminClient();
+  await adminSupabase.auth.admin.updateUserById(user.id, { email_confirm: true });
+
   revalidatePath("/");
   redirect("/");
 }

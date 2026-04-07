@@ -53,10 +53,10 @@ export default function VerificationBanner({ email }: { email: string }) {
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#141f59]">Verify your email to post tickets</p>
+          <p className="text-sm font-semibold text-[#141f59]">Set your password to post tickets</p>
           <p className="text-xs text-[#9AA6B2] mt-0.5">
-            Check your inbox for the invitation email we sent to <strong>{email}</strong>.{" "}
-            {sent && <span className="text-[#141f59] font-semibold">A new invitation has been sent!</span>}
+            Check your inbox for the setup email we sent to <strong>{email}</strong>.{" "}
+            {sent && <span className="text-[#141f59] font-semibold">A new setup email has been sent!</span>}
             {error && <span className="text-red-600">{error}</span>}
           </p>
         </div>
@@ -70,7 +70,7 @@ export default function VerificationBanner({ email }: { email: string }) {
           ? "Sending…"
           : remaining > 0
           ? `Resend in ${remaining}s`
-          : "Resend Invitation"}
+          : "Resend setup email"}
       </button>
     </div>
   );

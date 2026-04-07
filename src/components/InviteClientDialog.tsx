@@ -38,7 +38,7 @@ export default function InviteClientDialog() {
         <DialogHeader>
           <DialogTitle>Invite a new client</DialogTitle>
           <DialogDescription>
-            Creates their portal account, configures their first project, and sends a welcome email.
+            Creates their portal account, configures their first project, and emails them a link to set their password.
           </DialogDescription>
         </DialogHeader>
 
@@ -64,11 +64,6 @@ export default function InviteClientDialog() {
                 <Label htmlFor="ic-company" className="text-xs font-medium">Company name</Label>
                 <Input id="ic-company" name="companyName" placeholder="Acme Corp" required />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="ic-pass" className="text-xs font-medium">Temporary password</Label>
-              <Input id="ic-pass" name="password" type="text" placeholder="Sent in the invite email" required minLength={8} />
             </div>
 
             <div className="border-t pt-4 space-y-3">
