@@ -93,9 +93,9 @@ export async function inviteClient(
     const portalUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://support.baghlabs.com";
 
     await resend.emails.send({
-      from: "BaghlLabs Support <support@baghlabs.com>",
+      from: "Baghlabs Support <support@baghlabs.com>",
       to: email,
-      subject: `Welcome to the BaghlLabs Support Portal — ${companyName}`,
+      subject: `Welcome to the Baghlabs Support Portal — ${companyName}`,
       html: buildInvitationEmail({ companyName, email, password, portalUrl, projectName }),
     });
   } catch (emailError) {
@@ -178,7 +178,7 @@ function buildInvitationEmail(params: {
           <tr>
             <td style="background:#0f172a;padding:32px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">
-                BaghlLabs Support Portal
+                Baghlabs Support Portal
               </h1>
             </td>
           </tr>
@@ -230,7 +230,7 @@ function buildInvitationEmail(params: {
           <tr>
             <td style="border-top:1px solid #e2e8f0;padding:24px 40px;text-align:center;">
               <p style="margin:0;color:#94a3b8;font-size:13px;">
-                BaghlLabs · If you have any issues accessing your account, reply to this email.
+                Baghlabs · If you have any issues accessing your account, reply to this email.
               </p>
             </td>
           </tr>

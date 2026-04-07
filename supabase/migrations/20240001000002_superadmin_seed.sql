@@ -25,10 +25,10 @@ BEGIN
   END IF;
 
   INSERT INTO public.profiles (id, company_name, is_superadmin)
-  VALUES (v_uid, 'BaghlLabs', true)
+  VALUES (v_uid, 'Baghlabs', true)
   ON CONFLICT (id) DO UPDATE
     SET is_superadmin = true,
-        company_name  = 'BaghlLabs';
+        company_name  = 'Baghlabs';
 
   RAISE NOTICE 'Superadmin profile set for UID: %', v_uid;
 END;

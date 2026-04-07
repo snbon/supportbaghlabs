@@ -65,7 +65,7 @@ export default async function SuperadminDashboard() {
         <div className="px-5 py-5 border-b border-[var(--sidebar-border)]">
           <div className="flex items-center gap-2.5">
             <BrandIcon />
-            <span className="font-bold text-sm text-[var(--sidebar-foreground)] tracking-tight">BaghlLabs</span>
+            <span className="font-bold text-sm text-[var(--sidebar-foreground)] tracking-tight">Baghlabs</span>
           </div>
         </div>
         <nav className="flex-1 px-3 py-4">
@@ -93,7 +93,7 @@ export default async function SuperadminDashboard() {
             {/* Mobile brand */}
             <div className="lg:hidden flex items-center gap-2">
               <BrandIcon />
-              <span className="font-bold text-sm tracking-tight">BaghlLabs</span>
+              <span className="font-bold text-sm tracking-tight">Baghlabs</span>
             </div>
             {/* Desktop title */}
             <div className="hidden lg:block">

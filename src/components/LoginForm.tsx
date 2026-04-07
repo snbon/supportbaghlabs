@@ -28,7 +28,7 @@ export default function LoginForm() {
                 <path d="M2 4h12M2 8h8M2 12h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
-            <span className="text-white font-semibold text-lg tracking-tight">BaghlLabs</span>
+            <span className="text-white font-semibold text-lg tracking-tight">Baghlabs</span>
           </div>
         </div>
 
@@ -63,7 +63,7 @@ export default function LoginForm() {
         </div>
 
         <p className="relative z-10 text-[var(--sidebar-foreground)]/30 text-xs">
-          © {new Date().getFullYear()} BaghlLabs
+          © {new Date().getFullYear()} Baghlabs
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export default function LoginForm() {
                 <path d="M2 4h12M2 8h8M2 12h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
-            <span className="font-semibold text-base text-foreground">BaghlLabs</span>
+            <span className="font-semibold text-base text-foreground">Baghlabs</span>
           </div>
 
           <h2 className="text-2xl font-bold text-foreground tracking-tight">Sign in</h2>
