@@ -13,8 +13,12 @@ export const metadata: Metadata = {
   title: "BaghLabs Support Portal",
   description: "Client support ticketing portal for Baghlabs projects.",
   icons: {
-    icon: "/brand/b_black.png",
-    apple: "/brand/b_black.png",
+    icon: [
+      { url: "/brand/favicon_io/favicon.ico" },
+      { url: "/brand/favicon_io/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/brand/favicon_io/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/brand/favicon_io/apple-touch-icon.png",
   },
 };
 

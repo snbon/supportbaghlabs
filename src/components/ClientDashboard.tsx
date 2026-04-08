@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Profile, Project, Ticket } from "@/lib/types";
 import ClientDashboardShell from "@/components/ClientDashboardShell";
@@ -62,9 +63,11 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 rounded-full bg-[#D9EAFD] flex items-center justify-center">
-              <span className="text-[10px] font-extrabold text-[#141f59]">{initials}</span>
-            </div>
+            <Link href="/profile" title="Profile">
+              <div className="w-7 h-7 rounded-full bg-[#D9EAFD] flex items-center justify-center hover:bg-[#bcd4f0] transition-colors cursor-pointer">
+                <span className="text-[10px] font-extrabold text-[#141f59]">{initials}</span>
+              </div>
+            </Link>
             <form action={logout}>
               <Button variant="ghost" size="sm" type="submit" className="text-muted-foreground text-xs">
                 Sign out
