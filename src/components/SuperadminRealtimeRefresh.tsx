@@ -24,7 +24,13 @@ export default function SuperadminRealtimeRefresh() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Polling fallback: refresh every 30s in case Realtime events are not received
+    const pollId = setInterval(() => router.refresh(), 30_000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(pollId);
+    };
   }, [router]);
 
   return null;

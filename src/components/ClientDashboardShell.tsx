@@ -25,6 +25,12 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
 
   const allProjectIds = projects.map((p) => p.id);
 
+  // Sync liveTickets when the server re-renders and passes fresh props
+  // (happens after router.refresh() or page navigation)
+  useEffect(() => {
+    setLiveTickets(tickets);
+  }, [tickets]);
+
   // Subscribe to ticket inserts + updates and keep liveTickets in sync
   useEffect(() => {
     if (allProjectIds.length === 0) return;
@@ -55,6 +61,13 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
     return () => { supabase.removeChannel(channel); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allProjectIds.join(",")]);
+
+  // Polling fallback: refresh server data every 30 seconds in case Realtime
+  // events are not received (e.g., Realtime not configured or connection dropped)
+  useEffect(() => {
+    const id = setInterval(() => router.refresh(), 30_000);
+    return () => clearInterval(id);
+  }, [router]);
 
   const handleProjectChange = useCallback((id: string) => {
     setActiveProjectId(id);

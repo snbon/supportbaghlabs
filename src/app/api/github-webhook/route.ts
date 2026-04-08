@@ -76,6 +76,8 @@ export async function POST(request: Request) {
   const githubRepo = repository.full_name; // e.g. "owner/repo-name"
   const issueNumber = issue.number;
 
+  console.log(`[webhook] action=${action} repo=${githubRepo} issue=#${issueNumber}`);
+
   // Map GitHub issue actions to ticket status values
   const actionToStatus: Record<string, string | null> = {
     opened: "open",
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!project) {
+    console.error(`[webhook] No project found for github_repo="${githubRepo}"`);
     return Response.json(
       { error: "No project found for this repo" },
       { status: 404 }
@@ -116,6 +119,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!ticket) {
+    console.error(`[webhook] No ticket found for project=${project.id} issue=#${issueNumber}`);
     return Response.json(
       { error: "No ticket found for this issue" },
       { status: 404 }
@@ -142,6 +146,8 @@ export async function POST(request: Request) {
       updates.description = issue.body;
     }
   }
+
+  console.log(`[webhook] Updating ticket=${ticket.id}`, updates);
 
   // Apply the update
   const { error: updateError } = await adminSupabase

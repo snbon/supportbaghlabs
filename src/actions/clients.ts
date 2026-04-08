@@ -91,6 +91,9 @@ export async function inviteClient(
   // Import any existing GitHub issues into the tickets table (best-effort)
   await importGitHubIssues(adminSupabase, projectData.id, githubRepo);
 
+  // Register the webhook on the client's GitHub repo (best-effort)
+  await registerGitHubWebhook(githubRepo);
+
   // Step 4: Generate a one-time setup link and send it via Resend.
   // Using type 'recovery' so the email_confirmed_at is NOT set on click —
   // it gets set only after the user successfully saves their password.
@@ -168,6 +171,9 @@ export async function addProject(
   // Import any existing GitHub issues (best-effort)
   await importGitHubIssues(supabase, projectData.id, githubRepo);
 
+  // Register the webhook on the client's GitHub repo (best-effort)
+  await registerGitHubWebhook(githubRepo);
+
   revalidatePath("/");
   return { success: true, message: `Project "${projectName}" added successfully.` };
 }
@@ -232,6 +238,74 @@ export async function resendInvitation(
   }
 
   return { success: true, message: "Setup email sent." };
+}
+
+// ─── GitHub Webhook Registration ───────────────────────────────────────────────
+
+/**
+ * Registers the support portal webhook on a GitHub repo so that issue events
+ * (open, close, edit, label) are forwarded to our webhook handler.
+ *
+ * Best-effort: logs errors but does not fail the parent action.
+ * If a webhook with the same URL already exists, GitHub returns 422 — ignored.
+ * Requires GITHUB_PAT to have `admin:repo_hook` (or `write:repo_hook`) scope.
+ */
+async function registerGitHubWebhook(githubRepo: string) {
+  const pat = process.env.GITHUB_PAT;
+  if (!pat) {
+    console.warn("[webhook-reg] GITHUB_PAT not set — skipping webhook registration.");
+    return;
+  }
+
+  const webhookUrl =
+    (process.env.NEXT_PUBLIC_SITE_URL || "https://support.baghlabs.com") +
+    "/api/github-webhook";
+
+  const secret = process.env.GITHUB_WEBHOOK_SECRET;
+
+  const body: Record<string, unknown> = {
+    name: "web",
+    active: true,
+    events: ["issues"],
+    config: {
+      url: webhookUrl,
+      content_type: "json",
+      insecure_ssl: "0",
+      ...(secret ? { secret } : {}),
+    },
+  };
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${githubRepo}/hooks`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${pat}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.status === 422) {
+      // Webhook already exists on this repo — nothing to do
+      console.log(`[webhook-reg] Webhook already registered on ${githubRepo}`);
+      return;
+    }
+
+    if (!res.ok) {
+      console.error(
+        `[webhook-reg] Failed to register webhook on ${githubRepo}:`,
+        res.status,
+        await res.text()
+      );
+      return;
+    }
+
+    console.log(`[webhook-reg] Webhook registered on ${githubRepo} → ${webhookUrl}`);
+  } catch (e) {
+    console.error(`[webhook-reg] Exception registering webhook on ${githubRepo}:`, e);
+  }
 }
 
 // ─── GitHub Import ─────────────────────────────────────────────────────────────
