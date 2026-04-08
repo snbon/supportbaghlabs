@@ -53,7 +53,7 @@ export default function CommentForm({
 
       <Textarea
         name="body"
-        placeholder="Write a comment… your team will see this on GitHub"
+        placeholder="Write a comment… our team will reply as soon as possible."
         rows={3}
         className="resize-none text-sm leading-relaxed"
       />

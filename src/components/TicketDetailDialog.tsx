@@ -108,11 +108,12 @@ export default function TicketDetailDialog({ ticket, project, open, onOpenChange
               <span className={`w-1.5 h-1.5 rounded-full mr-1.5 inline-block ${liveStatus === "open" ? "bg-emerald-500 animate-ping" : "bg-slate-400"}`} />
               {liveStatus === "open" ? "Open" : liveStatus.charAt(0).toUpperCase() + liveStatus.slice(1)}
             </Badge>
+            {/** 
             {ticket.github_issue_number && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <GitHubIcon /> #{ticket.github_issue_number}
               </span>
-            )}
+            )} **/}
           </div>
 
           <DialogTitle className="text-base font-bold leading-snug text-left pr-6">
@@ -158,13 +159,13 @@ export default function TicketDetailDialog({ ticket, project, open, onOpenChange
           <div className="flex items-center justify-between mb-3">
             <SectionLabel>Activity</SectionLabel>
             {loading && (
-              <span className="text-[11px] text-muted-foreground animate-pulse">Syncing with GitHub…</span>
+              <span className="text-[11px] text-muted-foreground animate-pulse">Syncing with your project..</span>
             )}
           </div>
 
           {ghError && (
             <div className="text-xs text-muted-foreground bg-muted/40 rounded-xl px-4 py-3">
-              Could not load GitHub activity — {ghError}
+              Could not load activity — {ghError}
             </div>
           )}
 
@@ -224,7 +225,7 @@ export default function TicketDetailDialog({ ticket, project, open, onOpenChange
         ) : (
           <div className="mt-5 pt-5 border-t border-border/60">
             <p className="text-xs text-muted-foreground text-center">
-              Reply will be available once this ticket is synced with GitHub.
+              Reply will be available once this ticket is synced with your project.
             </p>
           </div>
         )}
