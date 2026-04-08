@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import CommentForm from "@/components/CommentForm";
+import { syncTicketStatus } from "@/actions/tickets";
 import type { Ticket, Project } from "@/lib/types";
 
 interface GHComment {
@@ -92,6 +93,16 @@ export default function TicketDetailDialog({ ticket, project, open, onOpenChange
   const liveStatus = ghData?.state === "closed" ? "closed"
     : ghData?.state === "open"   ? "open"
     : ticket.status;
+
+  // If GitHub status differs from Supabase, silently sync the DB so the
+  // table and counters stay correct even if the webhook missed the event.
+  useEffect(() => {
+    if (!ghData) return;
+    const ghStatus = ghData.state === "closed" ? "closed" : "open";
+    if (ghStatus !== ticket.status) {
+      syncTicketStatus(ticket.id, ghStatus);
+    }
+  }, [ghData, ticket.id, ticket.status]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

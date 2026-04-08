@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import type { Project, Ticket } from "@/lib/types";
 import { createClient } from "@/lib/supabase/browser";
+import { syncTicketStatuses } from "@/actions/tickets";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import TicketHistory from "@/components/TicketHistory";
@@ -62,12 +63,17 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allProjectIds.join(",")]);
 
-  // Polling fallback: refresh server data every 30 seconds in case Realtime
-  // events are not received (e.g., Realtime not configured or connection dropped)
+  // Polling fallback: every 30s, sync ticket statuses from GitHub then refresh
+  // the UI. This guarantees the dashboard stays accurate even if the webhook
+  // misses events (e.g., reopened issues not updating).
   useEffect(() => {
-    const id = setInterval(() => router.refresh(), 30_000);
+    const id = setInterval(async () => {
+      await syncTicketStatuses(allProjectIds);
+      router.refresh();
+    }, 30_000);
     return () => clearInterval(id);
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, allProjectIds.join(",")]);
 
   const handleProjectChange = useCallback((id: string) => {
     setActiveProjectId(id);
