@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Profile, Project, Ticket, ClientWithStats } from "@/lib/types";
 import ClientTable from "@/components/ClientTable";
 import InviteClientDialog from "@/components/InviteClientDialog";
+import SuperadminRealtimeRefresh from "@/components/SuperadminRealtimeRefresh";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 
@@ -123,6 +124,7 @@ export default async function SuperadminDashboard() {
         </header>
 
         <main className="flex-1 px-4 sm:px-6 py-6 space-y-6">
+          <SuperadminRealtimeRefresh />
           {/* Stats grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {stats.map((s, i) => (

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import type { Project, Ticket } from "@/lib/types";
+import { createClient } from "@/lib/supabase/browser";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import TicketHistory from "@/components/TicketHistory";
@@ -20,6 +21,40 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
   const router = useRouter();
   const [activeProjectId, setActiveProjectId] = useState(initialProjectId);
   const [selectedTicket, setSelectedTicket]   = useState<Ticket | null>(null);
+  const [liveTickets, setLiveTickets]         = useState<Ticket[]>(tickets);
+
+  const allProjectIds = projects.map((p) => p.id);
+
+  // Subscribe to ticket inserts + updates and keep liveTickets in sync
+  useEffect(() => {
+    if (allProjectIds.length === 0) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel("shell-ticket-updates")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tickets" },
+        (payload) => {
+          const inserted = payload.new as Ticket;
+          if (!allProjectIds.includes(inserted.project_id)) return;
+          setLiveTickets((prev) => [inserted, ...prev]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "tickets" },
+        (payload) => {
+          const updated = payload.new as Ticket;
+          if (!allProjectIds.includes(updated.project_id)) return;
+          setLiveTickets((prev) => prev.map((t) => t.id === updated.id ? updated : t));
+          // Keep the open dialog in sync with the latest ticket data
+          setSelectedTicket((sel) => sel?.id === updated.id ? updated : sel);
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProjectIds.join(",")]);
 
   const handleProjectChange = useCallback((id: string) => {
     setActiveProjectId(id);
@@ -27,13 +62,33 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
   }, [router]);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
-  const activeTickets = tickets.filter((t) => t.project_id === activeProjectId);
-  const allProjectIds = projects.map((p) => p.id);
+  const activeTickets = liveTickets.filter((t) => t.project_id === activeProjectId);
+
+  const openCount   = liveTickets.filter((t) => t.status === "open").length;
+  const closedCount = liveTickets.filter((t) => t.status !== "open").length;
 
   return (
     <>
       {/* Realtime notification banner — listens to all user projects */}
-      <RealtimeNotifier projectIds={allProjectIds} initialTickets={tickets} />
+      <RealtimeNotifier projectIds={allProjectIds} initialTickets={liveTickets} />
+
+      {/* Stat cards — computed from live ticket state */}
+      <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-up">
+        {[
+          { label: "Total",  value: liveTickets.length, color: "text-foreground",       dot: "bg-slate-400" },
+          { label: "Open",   value: openCount,           color: "text-emerald-600",      dot: "bg-emerald-500" },
+          { label: "Closed", value: closedCount,         color: "text-muted-foreground", dot: "bg-slate-300" },
+        ].map((s, i) => (
+          <div key={s.label}
+            className={`bg-card border border-border/60 rounded-2xl px-4 py-3.5 stagger-${i + 1} animate-fade-up`}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{s.label}</p>
+            </div>
+            <p className={`text-2xl sm:text-3xl font-extrabold leading-none ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
 
       <div className="space-y-5">
         <Suspense>

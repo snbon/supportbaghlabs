@@ -9,6 +9,7 @@
  *   - reopened → status: "open"
  *   - labeled  → update labels array
  *   - unlabeled → update labels array
+ *   - edited   → sync title and description from GitHub
  *
  * Security: Validates the HMAC-SHA256 signature from GitHub using
  * GITHUB_WEBHOOK_SECRET to ensure requests are genuine.
@@ -80,8 +81,9 @@ export async function POST(request: Request) {
     opened: "open",
     closed: "closed",
     reopened: "open",
-    labeled: null, // labels-only update
+    labeled: null,   // labels-only update
     unlabeled: null, // labels-only update
+    edited: null,    // title/description sync
   };
 
   // Ignore unrecognized actions
@@ -121,7 +123,7 @@ export async function POST(request: Request) {
   }
 
   // Build the update object based on the action
-  const updates: { status?: string; labels?: string[] } = {};
+  const updates: { status?: string; labels?: string[]; title?: string; description?: string } = {};
 
   const newStatus = actionToStatus[action];
   if (newStatus !== null) {
@@ -131,6 +133,14 @@ export async function POST(request: Request) {
   // For label events, always sync the full labels array from the issue
   if (action === "labeled" || action === "unlabeled") {
     updates.labels = issue.labels.map((l) => l.name);
+  }
+
+  // For edited events, sync title and description from GitHub
+  if (action === "edited") {
+    updates.title = issue.title;
+    if (issue.body != null) {
+      updates.description = issue.body;
+    }
   }
 
   // Apply the update
@@ -158,6 +168,7 @@ interface GitHubLabel {
 interface GitHubIssue {
   number: number;
   title: string;
+  body: string | null;
   state: string;
   labels: GitHubLabel[];
 }

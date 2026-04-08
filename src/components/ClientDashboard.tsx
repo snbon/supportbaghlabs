@@ -45,9 +45,6 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
     ? profile.company_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
     : "?";
 
-  const openCount   = tickets.filter((t) => t.status === "open").length;
-  const closedCount = tickets.filter((t) => t.status !== "open").length;
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-20 bg-card/95 border-b border-border/60 backdrop-blur-md">
@@ -92,31 +89,12 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
             </p>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-up">
-              {[
-                { label: "Total",  value: tickets.length, color: "text-foreground",       dot: "bg-slate-400" },
-                { label: "Open",   value: openCount,       color: "text-emerald-600",      dot: "bg-emerald-500" },
-                { label: "Closed", value: closedCount,     color: "text-muted-foreground", dot: "bg-slate-300" },
-              ].map((s, i) => (
-                <div key={s.label}
-                  className={`bg-card border border-border/60 rounded-2xl px-4 py-3.5 stagger-${i + 1} animate-fade-up`}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{s.label}</p>
-                  </div>
-                  <p className={`text-2xl sm:text-3xl font-extrabold leading-none ${s.color}`}>{s.value}</p>
-                </div>
-              ))}
-            </div>
-
-            <ClientDashboardShell
-              projects={safeProjects}
-              tickets={tickets}
-              initialProjectId={validProjectId}
-              emailVerified={emailVerified}
-            />
-          </>
+          <ClientDashboardShell
+            projects={safeProjects}
+            tickets={tickets}
+            initialProjectId={validProjectId}
+            emailVerified={emailVerified}
+          />
         )}
       </main>
     </div>
