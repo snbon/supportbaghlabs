@@ -9,16 +9,16 @@ import { Button } from "@/components/ui/button";
 export default async function SuperadminDashboard() {
   const supabase = createAdminClient();
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("is_superadmin", false)
-    .order("company_name");
+  // Fetch profiles and auth users in parallel
+  const [
+    { data: profiles },
+    { data: { users: authUsers } },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("is_superadmin", false).order("company_name"),
+    supabase.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
 
   const safeProfiles: Profile[] = profiles || [];
-
-  // Fetch auth users to get email + verification status
-  const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
 
   let projects: Project[] = [];
   let tickets: Ticket[] = [];

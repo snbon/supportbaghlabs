@@ -14,16 +14,19 @@ interface ClientDashboardProps {
 export default async function ClientDashboard({ userId, defaultProjectId }: ClientDashboardProps) {
   const supabase = createAdminClient();
 
-  // Check if the user's email is verified
-  const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId);
+  // Fetch auth user, profile, and projects in parallel
+  const [
+    { data: { user: authUser } },
+    { data: profile },
+    { data: projects },
+  ] = await Promise.all([
+    supabase.auth.admin.getUserById(userId),
+    supabase.from("profiles").select("*").eq("id", userId).single<Profile>(),
+    supabase.from("projects").select("*").eq("client_id", userId).order("project_name"),
+  ]);
+
   const emailVerified = !!authUser?.email_confirmed_at;
   const userEmail = authUser?.email ?? "";
-
-  const { data: profile } = await supabase
-    .from("profiles").select("*").eq("id", userId).single<Profile>();
-
-  const { data: projects } = await supabase
-    .from("projects").select("*").eq("client_id", userId).order("project_name");
 
   const safeProjects: Project[] = projects || [];
   let tickets: Ticket[] = [];
