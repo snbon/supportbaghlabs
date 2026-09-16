@@ -31,15 +31,15 @@ export default function ClientDetailDialog({ open, onOpenChange, profile, projec
         <DialogHeader>
           <div className="flex items-start justify-between gap-4 pr-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#D9EAFD] flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-[#141f59]">{initials}</span>
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-foreground">{initials}</span>
               </div>
               <div>
                 <DialogTitle className="text-base">{profile.company_name}</DialogTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {projects.length} project{projects.length !== 1 ? "s" : ""} ·{" "}
                   {openCount > 0 ? (
-                    <span className="text-emerald-600 font-medium">{openCount} open</span>
+                    <span className="text-success font-medium">{openCount} open</span>
                   ) : "no open tickets"}
                 </p>
               </div>
@@ -62,7 +62,7 @@ export default function ClientDetailDialog({ open, onOpenChange, profile, projec
                     <span className="text-sm font-medium text-foreground">{p.project_name}</span>
                     <code className="text-xs text-muted-foreground">{p.github_repo}</code>
                     {pOpen > 0 && (
-                      <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-100">
+                      <Badge variant="outline" className="text-xs bg-success-soft text-success border-success/20">
                         {pOpen}
                       </Badge>
                     )}

@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { headers } from "next/headers";
+import { ThemeProvider } from "next-themes";
+import { readThemeCookie } from "@/lib/theme";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -25,12 +28,25 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F8FAFC" },
+    { media: "(prefers-color-scheme: dark)", color: "#141f59" },
+  ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Cookie only (no DB): written at login and whenever the user changes the theme.
+  const [theme, headerList] = await Promise.all([readThemeCookie(), headers()]);
+  const nonce = headerList.get("x-nonce") ?? undefined;
+
   return (
-    <html lang="en" className={`${jakarta.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme={theme} enableSystem disableTransitionOnChange nonce={nonce}>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
