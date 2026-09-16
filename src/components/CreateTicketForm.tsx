@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { submitTicket, type TicketState } from "@/actions/tickets";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,10 +17,10 @@ const initialState: TicketState = {};
 
 export default function CreateTicketForm({ projectId, projectName, disabled }: CreateTicketFormProps) {
   const [state, formAction, isPending] = useActionState(submitTicket, initialState);
-  const [formKey, setFormKey] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state.success) setFormKey((k) => k + 1);
+    if (state.success) formRef.current?.reset();
   }, [state.success]);
 
   return (
@@ -33,7 +33,7 @@ export default function CreateTicketForm({ projectId, projectName, disabled }: C
         )}
       </div>
 
-      <form key={formKey} action={formAction} className="p-5 space-y-4">
+      <form ref={formRef} action={formAction} className="p-5 space-y-4">
         <input type="hidden" name="projectId" value={projectId} />
 
         {state.success && (

@@ -1,29 +1,46 @@
 /**
- * GET /api/github-comments?repo=owner/repo&issue=123
+ * GET /api/github-comments?ticketId=<uuid>
  *
- * Server-side proxy so GITHUB_PAT never reaches the browser.
- * Returns the issue details + all comments from GitHub.
+ * Authenticated proxy so GITHUB_PAT never reaches the browser. The repo and
+ * issue number are resolved from the caller's own ticket — the client cannot
+ * point this endpoint at arbitrary repositories.
  */
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const repo  = searchParams.get("repo");
-  const issue = searchParams.get("issue");
+import { getSession, getTicketForUser } from "@/lib/dal";
+import { rateLimit } from "@/lib/rate-limit";
+import { uuidSchema } from "@/lib/validation";
+import { githubHeaders, hasGitHubToken, issueUrl } from "@/lib/github";
 
-  if (!repo || !issue) {
-    return Response.json({ error: "Missing repo or issue param" }, { status: 400 });
+interface GHComment {
+  id: number;
+  body: string;
+  created_at: string;
+  user?: { login: string; avatar_url: string };
+}
+
+export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!(await rateLimit(`comments-api:${session.userId}`, 60, 60))) {
+    return Response.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const headers = {
-    Authorization: `Bearer ${process.env.GITHUB_PAT}`,
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
+  const ticketId = uuidSchema.safeParse(new URL(request.url).searchParams.get("ticketId"));
+  if (!ticketId.success) return Response.json({ error: "Invalid ticketId" }, { status: 400 });
 
-  // Fetch issue details and comments in parallel
+  const owned = await getTicketForUser(ticketId.data, session);
+  if (!owned) return Response.json({ error: "Ticket not found" }, { status: 404 });
+
+  const { ticket, project } = owned;
+  if (!ticket.github_issue_number || !hasGitHubToken()) {
+    return Response.json({ error: "Ticket is not linked to GitHub" }, { status: 404 });
+  }
+
+  const headers = githubHeaders();
   const [issueRes, commentsRes] = await Promise.all([
-    fetch(`https://api.github.com/repos/${repo}/issues/${issue}`, { headers }),
-    fetch(`https://api.github.com/repos/${repo}/issues/${issue}/comments`, { headers }),
+    fetch(issueUrl(project.github_repo, ticket.github_issue_number), { headers, cache: "no-store" }),
+    fetch(issueUrl(project.github_repo, ticket.github_issue_number, "/comments"), { headers, cache: "no-store" }),
   ]);
 
   if (!issueRes.ok) {
@@ -32,25 +49,18 @@ export async function GET(request: Request) {
 
   const [issueData, commentsData] = await Promise.all([
     issueRes.json(),
-    commentsRes.ok ? commentsRes.json() : Promise.resolve([]),
+    commentsRes.ok ? (commentsRes.json() as Promise<GHComment[]>) : Promise.resolve([] as GHComment[]),
   ]);
 
   return Response.json({
-    labels:   (issueData.labels ?? []).map((l: { name: string; color: string }) => ({ name: l.name, color: l.color })),
-    state:    issueData.state,        // "open" | "closed"
-    comments: commentsData.map((c: GHComment) => ({
-      id:         c.id,
-      body:       c.body,
+    labels: (issueData.labels ?? []).map((l: { name: string; color: string }) => ({ name: l.name, color: l.color })),
+    state: issueData.state,
+    comments: commentsData.map((c) => ({
+      id: c.id,
+      body: c.body,
       created_at: c.created_at,
-      author:     c.user?.login ?? "unknown",
-      avatar:     c.user?.avatar_url ?? null,
+      author: c.user?.login ?? "unknown",
+      avatar: c.user?.avatar_url ?? null,
     })),
   });
-}
-
-interface GHComment {
-  id: number;
-  body: string;
-  created_at: string;
-  user?: { login: string; avatar_url: string };
 }

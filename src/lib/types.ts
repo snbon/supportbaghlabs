@@ -1,39 +1,48 @@
 /**
  * Database types matching the Supabase schema.
- * These interfaces mirror the table columns exactly so TypeScript
- * can catch any mismatches between the DB and our UI code.
  */
 
-/** Represents a row in the `profiles` table (one-to-one with auth.users). */
+export type Theme = "light" | "dark" | "system";
+export const THEMES: readonly Theme[] = ["light", "dark", "system"] as const;
+
+/** Row in `profiles` (one-to-one with auth.users). */
 export interface Profile {
-  id: string; // uuid, references auth.users.id
+  id: string;
   company_name: string;
   is_superadmin: boolean;
+  /** Denormalised from auth.users via trigger. */
+  email: string | null;
+  /** Denormalised from auth.users.email_confirmed_at via trigger. */
+  email_verified: boolean;
+  theme: Theme;
+  created_at: string;
 }
 
-/** Represents a row in the `projects` table. */
+/** Row in `projects`. */
 export interface Project {
-  id: string; // uuid
-  client_id: string; // uuid, references profiles.id
+  id: string;
+  client_id: string;
   project_name: string;
-  github_repo: string; // format: "owner/repo-name"
+  github_repo: string; // "owner/repo"
+  created_at: string;
 }
 
-/** Represents a row in the `tickets` table. */
+/** Row in `tickets`. */
 export interface Ticket {
-  id: string; // uuid
-  project_id: string; // uuid, references projects.id
+  id: string;
+  project_id: string;
   title: string;
   description: string;
-  status: string; // "open" | "closed" | "in_progress" etc.
-  labels: string[]; // array of label strings, e.g. ["bug", "working on it"]
-  github_issue_number?: number; // stored when ticket is created, used by webhook
+  status: string; // "open" | "closed"
+  labels: string[];
+  github_issue_number: number | null;
+  created_at: string;
 }
 
-/**
- * Extended client type used in the Superadmin dashboard.
- * Joins profile with aggregated project/ticket data.
- */
+export type ProjectWithTickets = Project & { tickets: Ticket[] };
+export type ProfileWithProjects = Profile & { projects: ProjectWithTickets[] };
+
+/** Aggregated client row for the superadmin dashboard. */
 export interface ClientWithStats {
   profile: Profile;
   projects: Project[];

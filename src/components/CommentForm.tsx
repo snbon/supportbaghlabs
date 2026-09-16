@@ -7,19 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface CommentFormProps {
   ticketId: string;
-  githubRepo: string;
-  issueNumber: number;
   onCommentPosted: () => void;
 }
 
 const initialState: CommentState = {};
 
-export default function CommentForm({
-  ticketId,
-  githubRepo,
-  issueNumber,
-  onCommentPosted,
-}: CommentFormProps) {
+export default function CommentForm({ ticketId, onCommentPosted }: CommentFormProps) {
   const [state, formAction, isPending] = useActionState(postComment, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -32,12 +25,10 @@ export default function CommentForm({
 
   return (
     <form ref={formRef} action={formAction} className="mt-5 pt-5 border-t border-border/60">
-      <input type="hidden" name="ticketId"    value={ticketId} />
-      <input type="hidden" name="githubRepo"  value={githubRepo} />
-      <input type="hidden" name="issueNumber" value={issueNumber} />
+      <input type="hidden" name="ticketId" value={ticketId} />
 
       {state.success && (
-        <div className="mb-3 rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5 text-sm text-emerald-700 flex items-center gap-2">
+        <div className="mb-3 rounded-xl bg-success-soft border border-success/20 px-3.5 py-2.5 text-sm text-success flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -46,13 +37,15 @@ export default function CommentForm({
         </div>
       )}
       {state.error && (
-        <div className="mb-3 rounded-xl bg-red-50 border border-red-100 px-3.5 py-2.5 text-sm text-red-600">
+        <div className="mb-3 rounded-xl bg-destructive/10 border border-destructive/20 px-3.5 py-2.5 text-sm text-destructive">
           {state.error}
         </div>
       )}
 
       <Textarea
         name="body"
+        required
+        maxLength={10000}
         placeholder="Write a comment… our team will reply as soon as possible."
         rows={3}
         className="resize-none text-sm leading-relaxed"
