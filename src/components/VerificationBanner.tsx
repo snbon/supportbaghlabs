@@ -3,23 +3,13 @@
 import { useState, useEffect } from "react";
 import { resendInvitation, type ClientActionState } from "@/actions/clients";
 
-const COOLDOWN_MS = 60_000; // 1 minute
-const LS_KEY = "baghlabs_resend_ts";
+const COOLDOWN_SECONDS = 60;
 
 export default function VerificationBanner({ email }: { email: string }) {
   const [sent, setSent]       = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  // Restore cooldown from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(LS_KEY);
-    if (stored) {
-      const elapsed = Date.now() - parseInt(stored, 10);
-      if (elapsed < COOLDOWN_MS) setRemaining(Math.ceil((COOLDOWN_MS - elapsed) / 1000));
-    }
-  }, []);
 
   // Countdown timer
   useEffect(() => {
@@ -39,8 +29,7 @@ export default function VerificationBanner({ email }: { email: string }) {
       setError(result.error);
     } else {
       setSent(true);
-      localStorage.setItem(LS_KEY, String(Date.now()));
-      setRemaining(COOLDOWN_MS / 1000);
+      setRemaining(COOLDOWN_SECONDS);
     }
   }
 

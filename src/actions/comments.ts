@@ -1,7 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getSession, getTicketForUser } from "@/lib/dal";
+import { rateLimit } from "@/lib/rate-limit";
+import { commentSchema, parseForm } from "@/lib/validation";
+import { githubHeaders, hasGitHubToken, issueUrl } from "@/lib/github";
 
 export interface CommentState {
   error?: string;
@@ -9,63 +11,40 @@ export interface CommentState {
 }
 
 /**
- * postComment — posts a text comment to the GitHub issue linked to a ticket.
+ * postComment — posts a comment to the GitHub issue linked to a ticket.
+ * The repo and issue number are resolved from the database, never from the client.
  */
 export async function postComment(
-  _prevState: CommentState,
+  _prev: CommentState,
   formData: FormData
 ): Promise<CommentState> {
-  const sessionSupabase = await createClient();
-  const { data: { user } } = await sessionSupabase.auth.getUser();
-  if (!user) return { error: "Not authenticated." };
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated." };
 
-  const ticketId   = formData.get("ticketId")   as string;
-  const githubRepo = formData.get("githubRepo")  as string;
-  const issueNum   = formData.get("issueNumber") as string;
-  const body       = (formData.get("body") as string)?.trim();
+  const parsed = parseForm(commentSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+  const { ticketId, body } = parsed.data;
 
-  if (!body) return { error: "Please write a comment before sending." };
-  if (!githubRepo || !issueNum) {
+  if (!(await rateLimit(`comment:${session.userId}`, 30, 60 * 60))) {
+    return { error: "You are sending comments too quickly. Please wait a moment." };
+  }
+
+  const owned = await getTicketForUser(ticketId, session);
+  if (!owned) return { error: "Ticket not found." };
+
+  const { ticket, project } = owned;
+  if (!ticket.github_issue_number || !project.github_repo || !hasGitHubToken()) {
     return { error: "This ticket is not linked to a GitHub issue yet." };
   }
 
-  // Verify the user owns the ticket
-  const admin = createAdminClient();
-  const { data: ticket } = await admin
-    .from("tickets")
-    .select("id, project_id")
-    .eq("id", ticketId)
-    .single();
-
-  if (!ticket) return { error: "Ticket not found." };
-
-  const { data: project } = await admin
-    .from("projects")
-    .select("client_id")
-    .eq("id", ticket.project_id)
-    .single();
-
-  if (project?.client_id !== user.id) return { error: "Unauthorized." };
-
-  const ghRes = await fetch(
-    `https://api.github.com/repos/${githubRepo}/issues/${issueNum}/comments`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.GITHUB_PAT}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ body }),
-    }
-  );
-
+  const ghRes = await fetch(issueUrl(project.github_repo, ticket.github_issue_number, "/comments"), {
+    method: "POST",
+    headers: githubHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ body }),
+  });
   if (!ghRes.ok) {
-    const msg = await ghRes.text();
-    console.error("GitHub comment post failed:", msg);
+    console.error("[postComment] GitHub returned", ghRes.status);
     return { error: "Failed to post comment. Please try again." };
   }
-
   return { success: true };
 }
