@@ -1,19 +1,30 @@
 /**
  * Next.js Proxy (formerly Middleware) — runs before rendering for matched paths.
  *
- * Its ONLY job is to refresh the Supabase auth cookies so Server Components
- * see a live session. It is not an authorization boundary: every server action
- * and route handler authenticates through `src/lib/dal.ts`.
+ * Responsibilities (and nothing more):
+ *  1. refresh the Supabase auth cookies so Server Components see a live session
+ *  2. generate a per-request CSP nonce and attach the Content-Security-Policy
  *
- * The matcher skips API routes, Next internals, static files and prefetch
- * requests so we do not pay for session work where it is not needed.
+ * It is not an authorization boundary: every server action and route handler
+ * authenticates through `src/lib/dal.ts`.
  */
 
 import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { buildCsp, CSP_HEADER } from "@/lib/csp";
 
 export async function proxy(request: NextRequest) {
-  return updateSession(request);
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = buildCsp(nonce);
+
+  // Forwarded to the render so Next can tag its own scripts with the nonce.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set(CSP_HEADER.toLowerCase(), csp);
+
+  const response = await updateSession(request, requestHeaders);
+  response.headers.set(CSP_HEADER, csp);
+  return response;
 }
 
 export const config = {
