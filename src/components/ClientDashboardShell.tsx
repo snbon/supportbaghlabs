@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Project, Ticket } from "@/lib/types";
@@ -28,6 +28,10 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
 
   const projectIdKey = projects.map((p) => p.id).join(",");
 
+  // Latest list, readable from the realtime callback without stale closures.
+  const liveRef = useRef(liveTickets);
+  useEffect(() => { liveRef.current = liveTickets; }, [liveTickets]);
+
   // Adopt fresh server data after a navigation / server action.
   useEffect(() => { setLiveTickets(tickets); }, [tickets]);
 
@@ -35,17 +39,15 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
     const ownProjects = new Set(projectIdKey.split(","));
     if (e.type !== "DELETE" && !ownProjects.has(e.ticket.project_id)) return;
 
-    setLiveTickets((prev) => {
-      if (e.type === "UPDATE") {
-        const before = prev.find((t) => t.id === e.ticket.id);
-        const changes = before ? describeTicketChange(before, e.ticket) : [];
-        if (changes.length) {
-          setNotification({ id: `${e.ticket.id}-${Date.now()}`, ticketTitle: e.ticket.title, changes });
-        }
-        setSelectedTicket((sel) => (sel?.id === e.ticket.id ? e.ticket : sel));
+    if (e.type === "UPDATE") {
+      const before = liveRef.current.find((t) => t.id === e.ticket.id);
+      const changes = before ? describeTicketChange(before, e.ticket) : [];
+      if (changes.length) {
+        setNotification({ id: `${e.ticket.id}-${Date.now()}`, ticketTitle: e.ticket.title, changes });
       }
-      return applyTicketEvent(prev, e);
-    });
+      setSelectedTicket((sel) => (sel?.id === e.ticket.id ? e.ticket : sel));
+    }
+    setLiveTickets((prev) => applyTicketEvent(prev, e));
   }, [projectIdKey]);
 
   useTicketChanges(onEvent, projects.length > 0);

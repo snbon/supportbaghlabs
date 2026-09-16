@@ -6,7 +6,7 @@
 
 import type { Config } from "@netlify/functions";
 
-export default async () => {
+const reconcile = async () => {
   const base = process.env.URL ?? process.env.NEXT_PUBLIC_SITE_URL;
   const secret = process.env.CRON_SECRET;
   if (!base || !secret) {
@@ -22,6 +22,8 @@ export default async () => {
   console.log(`[reconcile] ${res.status} ${body}`);
   return new Response(body, { status: res.ok ? 200 : 500 });
 };
+
+export default reconcile;
 
 export const config: Config = {
   schedule: "*/5 * * * *",
