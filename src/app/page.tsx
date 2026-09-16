@@ -1,36 +1,42 @@
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getSession, getClientDashboardData } from "@/lib/dal";
+import { safeNext } from "@/lib/validation";
 import LoginForm from "@/components/LoginForm";
 import SuperadminDashboard from "@/components/SuperadminDashboard";
 import ClientDashboard from "@/components/ClientDashboard";
-import type { Profile } from "@/lib/types";
-import { redirect } from "next/navigation";
+import DashboardSkeleton from "@/components/DashboardSkeleton";
 
-// searchParams is a Promise in Next.js 15
 interface PageProps {
   searchParams: Promise<{ project?: string; token_hash?: string; type?: string; next?: string }>;
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
-  const { project: defaultProjectId, token_hash, type, next } = await searchParams;
+  const { project, token_hash, type, next } = await searchParams;
 
-  // Supabase sometimes redirects back to the site root instead of /auth/callback
-  // (e.g. when the redirect URL isn't in the allowlist). Forward to the handler.
+  // Supabase sometimes redirects auth links to the site root; forward them.
   if (token_hash && type) {
-    const nextPath = next ?? "/set-password";
-    redirect(`/auth/callback?token_hash=${token_hash}&type=${type}&next=${nextPath}`);
+    const params = new URLSearchParams({ token_hash, type, next: safeNext(next, "/set-password") });
+    redirect(`/auth/callback?${params}`);
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Cookie + local JWT verification only — no database call before first paint.
+  const session = await getSession();
+  if (!session) return <LoginForm />;
 
-  if (!user) return <LoginForm />;
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <Dashboard userId={session.userId} email={session.email} defaultProjectId={project} />
+    </Suspense>
+  );
+}
 
-  const adminSupabase = createAdminClient();
-  const { data: profile } = await adminSupabase
-    .from("profiles").select("*").eq("id", user.id).single<Profile>();
-
-  if (profile?.is_superadmin) return <SuperadminDashboard />;
-
-  return <ClientDashboard userId={user.id} defaultProjectId={defaultProjectId} />;
+/** Streams in after one database round trip. */
+async function Dashboard({
+  userId, email, defaultProjectId,
+}: { userId: string; email: string; defaultProjectId?: string }) {
+  const data = await getClientDashboardData(userId);
+  if (!data) return <LoginForm />;
+  if (data.is_superadmin) return <SuperadminDashboard />;
+  return <ClientDashboard data={data} email={email} defaultProjectId={defaultProjectId} />;
 }

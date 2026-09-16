@@ -1,51 +1,30 @@
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { Profile, Project, Ticket } from "@/lib/types";
+import { stripTickets, type ProfileWithProjects, type Project, type Ticket } from "@/lib/types";
 import ClientDashboardShell from "@/components/ClientDashboardShell";
 import VerificationBanner from "@/components/VerificationBanner";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 
 interface ClientDashboardProps {
-  userId: string;
+  data: ProfileWithProjects;
+  email: string;
   defaultProjectId?: string;
 }
 
-export default async function ClientDashboard({ userId, defaultProjectId }: ClientDashboardProps) {
-  const supabase = createAdminClient();
+export default function ClientDashboard({ data, email, defaultProjectId }: ClientDashboardProps) {
+  const projects: Project[] = data.projects.map(stripTickets);
+  const tickets: Ticket[] = data.projects
+    .flatMap((p) => p.tickets)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-  // Fetch auth user, profile, and projects in parallel
-  const [
-    { data: { user: authUser } },
-    { data: profile },
-    { data: projects },
-  ] = await Promise.all([
-    supabase.auth.admin.getUserById(userId),
-    supabase.from("profiles").select("*").eq("id", userId).single<Profile>(),
-    supabase.from("projects").select("*").eq("client_id", userId).order("project_name"),
-  ]);
+  const emailVerified = data.email_verified;
+  const userEmail = data.email ?? email;
 
-  const emailVerified = !!authUser?.email_confirmed_at;
-  const userEmail = authUser?.email ?? "";
+  const validProjectId =
+    projects.find((p) => p.id === defaultProjectId)?.id ?? projects[0]?.id ?? "";
 
-  const safeProjects: Project[] = projects || [];
-  let tickets: Ticket[] = [];
-
-  if (safeProjects.length > 0) {
-    const { data: td } = await supabase
-      .from("tickets").select("*")
-      .in("project_id", safeProjects.map((p) => p.id))
-      .order("created_at", { ascending: false });
-    tickets = (td as Ticket[]) || [];
-  }
-
-  // Resolve initial project: URL param → first project
-  const validProjectId = safeProjects.find((p) => p.id === defaultProjectId)?.id
-    ?? safeProjects[0]?.id
-    ?? "";
-
-  const initials = profile?.company_name
-    ? profile.company_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+  const initials = data.company_name
+    ? data.company_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
     : "?";
 
   return (
@@ -53,19 +32,19 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
       <header className="sticky top-0 z-20 bg-card/95 border-b border-border/60 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#141f59] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center shrink-0">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4h12M2 8h8M2 12h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" className="text-brand-foreground" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
             <span className="font-bold text-sm text-foreground truncate">
-              {profile?.company_name || "Support Portal"}
+              {data.company_name || "Support Portal"}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Link href="/profile" title="Profile">
-              <div className="w-7 h-7 rounded-full bg-[#D9EAFD] flex items-center justify-center hover:bg-[#bcd4f0] transition-colors cursor-pointer">
-                <span className="text-[10px] font-extrabold text-[#141f59]">{initials}</span>
+            <Link href="/profile" title="Account settings" aria-label="Account settings">
+              <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/70 transition-colors cursor-pointer">
+                <span className="text-[10px] font-extrabold text-secondary-foreground">{initials}</span>
               </div>
             </Link>
             <form action={logout}>
@@ -79,7 +58,7 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6">
         {!emailVerified && <VerificationBanner email={userEmail} />}
-        {safeProjects.length === 0 ? (
+        {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center animate-fade-up px-4">
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-5">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
@@ -93,7 +72,7 @@ export default async function ClientDashboard({ userId, defaultProjectId }: Clie
           </div>
         ) : (
           <ClientDashboardShell
-            projects={safeProjects}
+            projects={projects}
             tickets={tickets}
             initialProjectId={validProjectId}
             emailVerified={emailVerified}
