@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useCallback, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Project, Ticket } from "@/lib/types";
-import { createClient } from "@/lib/supabase/browser";
+import { applyTicketEvent, describeTicketChange, useTicketChanges, type TicketEvent } from "@/lib/realtime";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import TicketHistory from "@/components/TicketHistory";
-import TicketDetailDialog from "@/components/TicketDetailDialog";
-import RealtimeNotifier from "@/components/RealtimeNotifier";
+import TicketNotification, { type TicketNotificationData } from "@/components/TicketNotification";
+
+const TicketDetailDialog = dynamic(() => import("@/components/TicketDetailDialog"));
 
 interface Props {
   projects: Project[];
@@ -22,68 +24,53 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
   const [activeProjectId, setActiveProjectId] = useState(initialProjectId);
   const [selectedTicket, setSelectedTicket]   = useState<Ticket | null>(null);
   const [liveTickets, setLiveTickets]         = useState<Ticket[]>(tickets);
+  const [notification, setNotification]       = useState<TicketNotificationData | null>(null);
 
-  const allProjectIds = projects.map((p) => p.id);
+  const projectIdKey = projects.map((p) => p.id).join(",");
 
-  // Sync liveTickets when the server re-renders and passes fresh props
-  // (happens after router.refresh() or page navigation)
-  useEffect(() => {
-    setLiveTickets(tickets);
-  }, [tickets]);
+  // Adopt fresh server data after a navigation / server action.
+  useEffect(() => { setLiveTickets(tickets); }, [tickets]);
 
-  // Subscribe to ticket inserts + updates and keep liveTickets in sync
-  useEffect(() => {
-    if (allProjectIds.length === 0) return;
-    const supabase = createClient();
-    const channel = supabase
-      .channel("shell-ticket-updates")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "tickets" },
-        (payload) => {
-          const inserted = payload.new as Ticket;
-          if (!allProjectIds.includes(inserted.project_id)) return;
-          setLiveTickets((prev) => [inserted, ...prev]);
+  const onEvent = useCallback((e: TicketEvent) => {
+    const ownProjects = new Set(projectIdKey.split(","));
+    if (e.type !== "DELETE" && !ownProjects.has(e.ticket.project_id)) return;
+
+    setLiveTickets((prev) => {
+      if (e.type === "UPDATE") {
+        const before = prev.find((t) => t.id === e.ticket.id);
+        const changes = before ? describeTicketChange(before, e.ticket) : [];
+        if (changes.length) {
+          setNotification({ id: `${e.ticket.id}-${Date.now()}`, ticketTitle: e.ticket.title, changes });
         }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "tickets" },
-        (payload) => {
-          const updated = payload.new as Ticket;
-          if (!allProjectIds.includes(updated.project_id)) return;
-          setLiveTickets((prev) => prev.map((t) => t.id === updated.id ? updated : t));
-          // Keep the open dialog in sync with the latest ticket data
-          setSelectedTicket((sel) => sel?.id === updated.id ? updated : sel);
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allProjectIds.join(",")]);
+        setSelectedTicket((sel) => (sel?.id === e.ticket.id ? e.ticket : sel));
+      }
+      return applyTicketEvent(prev, e);
+    });
+  }, [projectIdKey]);
+
+  useTicketChanges(onEvent, projects.length > 0);
+
+  const dismissNotification = useCallback(() => setNotification(null), []);
 
   const handleProjectChange = useCallback((id: string) => {
     setActiveProjectId(id);
-    router.push(`?project=${id}`, { scroll: false });
+    router.replace(`?project=${id}`, { scroll: false });
   }, [router]);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
   const activeTickets = liveTickets.filter((t) => t.project_id === activeProjectId);
-
   const openCount   = liveTickets.filter((t) => t.status === "open").length;
-  const closedCount = liveTickets.filter((t) => t.status !== "open").length;
+  const closedCount = liveTickets.length - openCount;
 
   return (
     <>
-      {/* Realtime notification banner — listens to all user projects */}
-      <RealtimeNotifier projectIds={allProjectIds} initialTickets={liveTickets} />
+      <TicketNotification notification={notification} onDismiss={dismissNotification} />
 
-      {/* Stat cards — computed from live ticket state */}
       <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-up">
         {[
-          { label: "Total",  value: liveTickets.length, color: "text-foreground",       dot: "bg-slate-400" },
-          { label: "Open",   value: openCount,           color: "text-emerald-600",      dot: "bg-emerald-500" },
-          { label: "Closed", value: closedCount,         color: "text-muted-foreground", dot: "bg-slate-300" },
+          { label: "Total",  value: liveTickets.length, color: "text-foreground",       dot: "bg-muted-foreground" },
+          { label: "Open",   value: openCount,           color: "text-success",          dot: "bg-success" },
+          { label: "Closed", value: closedCount,         color: "text-muted-foreground", dot: "bg-border" },
         ].map((s, i) => (
           <div key={s.label}
             className={`bg-card border border-border/60 rounded-2xl px-4 py-3.5 stagger-${i + 1} animate-fade-up`}>
@@ -114,15 +101,11 @@ export default function ClientDashboardShell({ projects, tickets, initialProject
             />
           </div>
           <div className="w-full min-w-0 animate-fade-up stagger-3">
-            <TicketHistory
-              tickets={activeTickets}
-              onTicketClick={setSelectedTicket}
-            />
+            <TicketHistory tickets={activeTickets} onTicketClick={setSelectedTicket} />
           </div>
         </div>
       </div>
 
-      {/* Ticket detail modal — passes full project for GitHub API */}
       {selectedTicket && (
         <TicketDetailDialog
           ticket={selectedTicket}

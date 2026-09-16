@@ -42,6 +42,11 @@ export interface Ticket {
 export type ProjectWithTickets = Project & { tickets: Ticket[] };
 export type ProfileWithProjects = Profile & { projects: ProjectWithTickets[] };
 
+/** Drop the embedded tickets from a project row. */
+export function stripTickets(p: ProjectWithTickets): Project {
+  return { id: p.id, client_id: p.client_id, project_name: p.project_name, github_repo: p.github_repo, created_at: p.created_at };
+}
+
 /** Aggregated client row for the superadmin dashboard. */
 export interface ClientWithStats {
   profile: Profile;

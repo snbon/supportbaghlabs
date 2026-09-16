@@ -5,11 +5,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import ClientDetailDialog from "@/components/ClientDetailDialog";
+import dynamic from "next/dynamic";
 import { resendInvitation } from "@/actions/clients";
 import type { ClientWithStats, Ticket } from "@/lib/types";
 
-const COOLDOWN_MS = 60_000;
+const ClientDetailDialog = dynamic(() => import("@/components/ClientDetailDialog"));
 
 interface ClientTableProps {
   clients: ClientWithStats[];
