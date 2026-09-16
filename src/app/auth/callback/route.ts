@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { safeNext } from "@/lib/validation";
 
 /**
  * Auth callback — handles two cases:
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const type       = searchParams.get("type") as EmailOtpType | null;
   const code       = searchParams.get("code");
-  const next       = searchParams.get("next") ?? "/";
+  const next       = safeNext(searchParams.get("next"));
 
   const cookieStore = await cookies();
 
@@ -47,10 +48,7 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     if (error) {
-      console.error("[auth/callback] verifyOtp failed:", error.message, {
-        type,
-        token_hash: token_hash.slice(0, 8) + "…",
-      });
+      console.error("[auth/callback] verifyOtp failed:", error.message, { type });
     } else {
       redirect(next);
     }
