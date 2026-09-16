@@ -19,8 +19,8 @@ interface ClientTableProps {
 function Initials({ name }: { name: string }) {
   const i = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <div className="w-9 h-9 rounded-full bg-[#D9EAFD] flex items-center justify-center shrink-0">
-      <span className="text-[11px] font-extrabold text-[#141f59]">{i}</span>
+    <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+      <span className="text-[11px] font-extrabold text-foreground">{i}</span>
     </div>
   );
 }
@@ -51,7 +51,7 @@ function ResendButton({ email }: { email: string }) {
 
   if (sent && cooldown > 0) {
     return (
-      <span className="text-[11px] text-[#9AA6B2]">Sent · {cooldown}s</span>
+      <span className="text-[11px] text-muted-foreground">Sent · {cooldown}s</span>
     );
   }
 
@@ -59,7 +59,7 @@ function ResendButton({ email }: { email: string }) {
     <button
       onClick={handleClick}
       disabled={isPending || cooldown > 0}
-      className="text-[11px] font-semibold text-[#141f59] border border-[#BCCCDC] rounded-lg px-2.5 py-1 hover:bg-[#D9EAFD] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      className="text-[11px] font-semibold text-foreground border border-input rounded-lg px-2.5 py-1 hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
     >
       {isPending ? "Sending…" : "Resend invite"}
     </button>
@@ -94,14 +94,14 @@ export default function ClientTable({ clients, allTickets }: ClientTableProps) {
             tabIndex={0}
             onClick={() => setSelected(c)}
             onKeyDown={(e) => e.key === "Enter" && setSelected(c)}
-            className="w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-[#BCCCDC] active:scale-[0.99] transition-all cursor-pointer"
+            className="w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-input active:scale-[0.99] transition-all cursor-pointer"
           >
             <Initials name={c.profile.company_name} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <p className="font-semibold text-sm text-foreground truncate">{c.profile.company_name}</p>
                 {!c.emailVerified && (
-                  <span className="shrink-0 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5">
+                  <span className="shrink-0 text-[10px] font-semibold text-warning bg-warning-soft border border-warning/20 rounded-full px-1.5 py-0.5">
                     Unverified
                   </span>
                 )}
@@ -112,7 +112,7 @@ export default function ClientTable({ clients, allTickets }: ClientTableProps) {
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {c.openTicketCount > 0 && (
-                <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-100">
+                <Badge variant="outline" className="text-[10px] bg-success-soft text-success border-success/20">
                   {c.openTicketCount} open
                 </Badge>
               )}
@@ -153,13 +153,13 @@ export default function ClientTable({ clients, allTickets }: ClientTableProps) {
                 </TableCell>
                 <TableCell>
                   {c.emailVerified ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success-soft border border-success/20 rounded-full px-2 py-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
                       Verified
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warning bg-warning-soft border border-warning/20 rounded-full px-2 py-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-warning inline-block" />
                       Unverified
                     </span>
                   )}
@@ -167,7 +167,7 @@ export default function ClientTable({ clients, allTickets }: ClientTableProps) {
                 <TableCell className="text-sm text-muted-foreground">{c.projects.length}</TableCell>
                 <TableCell>
                   {c.openTicketCount > 0 ? (
-                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-100 font-semibold">
+                    <Badge variant="outline" className="text-xs bg-success-soft text-success border-success/20 font-semibold">
                       {c.openTicketCount} open
                     </Badge>
                   ) : (

@@ -14,14 +14,14 @@ function Background() {
   return (
     <>
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-48 -left-48 w-[600px] h-[600px] rounded-full bg-[#D9EAFD] blur-3xl opacity-70" />
-        <div className="absolute -bottom-48 -right-48 w-[600px] h-[600px] rounded-full bg-[#BCCCDC] blur-3xl opacity-50" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-[#D9EAFD] blur-3xl opacity-40" />
+        <div className="absolute -top-48 -left-48 w-[600px] h-[600px] rounded-full bg-secondary blur-3xl opacity-70" />
+        <div className="absolute -bottom-48 -right-48 w-[600px] h-[600px] rounded-full bg-border blur-3xl opacity-50" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-secondary blur-3xl opacity-40" />
       </div>
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.04]"
         style={{
-          backgroundImage: "linear-gradient(#9AA6B2 1px,transparent 1px),linear-gradient(90deg,#9AA6B2 1px,transparent 1px)",
+          backgroundImage: "linear-gradient(var(--muted-foreground) 1px,transparent 1px),linear-gradient(90deg,var(--muted-foreground) 1px,transparent 1px)",
           backgroundSize: "48px 48px",
         }}
       />
@@ -33,19 +33,19 @@ function SignInCard({ onForgotPassword }: { onForgotPassword: () => void }) {
   const [state, formAction, isPending] = useActionState(login, initialState);
 
   return (
-    <div className="bg-white border border-[#BCCCDC] rounded-2xl p-8 shadow-lg shadow-[#BCCCDC]/30">
-      <h2 className="text-[#141f59] text-xl font-bold tracking-tight mb-1">Sign in</h2>
-      <p className="text-[#9AA6B2] text-sm mb-7">Enter your credentials to access your portal</p>
+    <div className="bg-card border border-input rounded-2xl p-8 shadow-lg shadow-black/5">
+      <h2 className="text-foreground text-xl font-bold tracking-tight mb-1">Sign in</h2>
+      <p className="text-muted-foreground text-sm mb-7">Enter your credentials to access your portal</p>
 
       {state.error && (
-        <div className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+        <div className="mb-5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}
 
       <form action={formAction} className="space-y-5">
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-semibold text-[#141f59]">Email</Label>
+          <Label htmlFor="email" className="text-sm font-semibold text-foreground">Email</Label>
           <Input
             id="email"
             name="email"
@@ -53,17 +53,17 @@ function SignInCard({ onForgotPassword }: { onForgotPassword: () => void }) {
             placeholder="you@company.com"
             required
             autoComplete="email"
-            className="h-10 bg-[#F8FAFC] border-[#BCCCDC] text-[#141f59] placeholder:text-[#9AA6B2] focus:border-[#141f59] focus:ring-[#D9EAFD]"
+            className="h-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
           />
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-semibold text-[#141f59]">Password</Label>
+            <Label htmlFor="password" className="text-sm font-semibold text-foreground">Password</Label>
             <button
               type="button"
               onClick={onForgotPassword}
-              className="text-xs text-[#9AA6B2] hover:text-[#141f59] transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Forgot password?
             </button>
@@ -75,13 +75,13 @@ function SignInCard({ onForgotPassword }: { onForgotPassword: () => void }) {
             placeholder="••••••••"
             required
             autoComplete="current-password"
-            className="h-10 bg-[#F8FAFC] border-[#BCCCDC] text-[#141f59] placeholder:text-[#9AA6B2] focus:border-[#141f59] focus:ring-[#D9EAFD]"
+            className="h-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
           />
         </div>
 
         <Button
           type="submit"
-          className="w-full h-10 bg-[#141f59] hover:bg-[#1a2870] text-white font-semibold border-0 mt-2"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold border-0 mt-2"
           disabled={isPending}
         >
           {isPending ? "Signing in…" : "Continue →"}
@@ -95,27 +95,27 @@ function ForgotPasswordCard({ onBack }: { onBack: () => void }) {
   const [state, formAction, isPending] = useActionState(forgotPassword, initialState);
 
   return (
-    <div className="bg-white border border-[#BCCCDC] rounded-2xl p-8 shadow-lg shadow-[#BCCCDC]/30">
-      <h2 className="text-[#141f59] text-xl font-bold tracking-tight mb-1">Reset password</h2>
-      <p className="text-[#9AA6B2] text-sm mb-7">
+    <div className="bg-card border border-input rounded-2xl p-8 shadow-lg shadow-black/5">
+      <h2 className="text-foreground text-xl font-bold tracking-tight mb-1">Reset password</h2>
+      <p className="text-muted-foreground text-sm mb-7">
         Enter your email and we&apos;ll send you a reset link.
       </p>
 
       {state.error && (
-        <div className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+        <div className="mb-5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}
 
       {state.success ? (
         <div className="space-y-5">
-          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
+          <div className="rounded-xl bg-success-soft border border-success/20 px-4 py-3 text-sm text-success">
             {state.message}
           </div>
           <button
             type="button"
             onClick={onBack}
-            className="w-full text-sm text-[#9AA6B2] hover:text-[#141f59] transition-colors"
+            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Back to sign in
           </button>
@@ -123,7 +123,7 @@ function ForgotPasswordCard({ onBack }: { onBack: () => void }) {
       ) : (
         <form action={formAction} className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="fp-email" className="text-sm font-semibold text-[#141f59]">Email</Label>
+            <Label htmlFor="fp-email" className="text-sm font-semibold text-foreground">Email</Label>
             <Input
               id="fp-email"
               name="email"
@@ -132,13 +132,13 @@ function ForgotPasswordCard({ onBack }: { onBack: () => void }) {
               required
               autoComplete="email"
               autoFocus
-              className="h-10 bg-[#F8FAFC] border-[#BCCCDC] text-[#141f59] placeholder:text-[#9AA6B2] focus:border-[#141f59] focus:ring-[#D9EAFD]"
+              className="h-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
             />
           </div>
 
           <Button
             type="submit"
-            className="w-full h-10 bg-[#141f59] hover:bg-[#1a2870] text-white font-semibold border-0"
+            className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold border-0"
             disabled={isPending}
           >
             {isPending ? "Sending…" : "Send reset link →"}
@@ -147,7 +147,7 @@ function ForgotPasswordCard({ onBack }: { onBack: () => void }) {
           <button
             type="button"
             onClick={onBack}
-            className="w-full text-sm text-[#9AA6B2] hover:text-[#141f59] transition-colors"
+            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Back to sign in
           </button>
@@ -161,7 +161,7 @@ export default function LoginForm() {
   const [view, setView] = useState<"signin" | "forgot">("signin");
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#F8FAFC]">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       <Background />
 
       <div className="relative z-10 w-full max-w-sm mx-auto px-6 animate-fade-up">
@@ -172,9 +172,18 @@ export default function LoginForm() {
             alt="Baghlabs"
             width={70}
             height={70}
-            className="mb-4 drop-shadow-sm"
+            priority
+            className="mb-4 size-[70px] drop-shadow-sm dark:hidden"
           />
-          <p className="text-[#9AA6B2] text-sm mt-1 font-medium">Support Portal</p>
+          <Image
+            src="/brand/baghlabs_white.png"
+            alt="Baghlabs"
+            width={70}
+            height={70}
+            priority
+            className="mb-4 size-[70px] drop-shadow-sm hidden dark:block"
+          />
+          <p className="text-muted-foreground text-sm mt-1 font-medium">Support Portal</p>
         </div>
 
         {view === "signin" ? (
@@ -183,7 +192,7 @@ export default function LoginForm() {
           <ForgotPasswordCard onBack={() => setView("signin")} />
         )}
 
-        <p className="text-center text-[#9AA6B2] text-xs mt-6">
+        <p className="text-center text-muted-foreground text-xs mt-6">
           © {new Date().getFullYear()} Baghlabs
         </p>
       </div>

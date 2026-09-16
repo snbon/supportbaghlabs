@@ -37,7 +37,7 @@ export default function CreateTicketForm({ projectId, projectName, disabled }: C
         <input type="hidden" name="projectId" value={projectId} />
 
         {state.success && (
-          <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5 text-sm text-emerald-700 flex items-center gap-2">
+          <div className="rounded-xl bg-success-soft border border-success/20 px-3.5 py-2.5 text-sm text-success flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -47,7 +47,7 @@ export default function CreateTicketForm({ projectId, projectName, disabled }: C
         )}
 
         {state.error && (
-          <div className="rounded-xl bg-red-50 border border-red-100 px-3.5 py-2.5 text-sm text-red-600">
+          <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-3.5 py-2.5 text-sm text-destructive">
             {state.error}
           </div>
         )}

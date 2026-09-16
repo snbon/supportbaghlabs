@@ -9,22 +9,22 @@ interface TicketCardProps {
 function StatusDot({ status }: { status: string }) {
   if (status.toLowerCase() === "open") return (
     <span className="relative flex h-2 w-2 shrink-0">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
     </span>
   );
   if (status.toLowerCase() === "closed") return (
-    <span className="h-2 w-2 rounded-full bg-slate-300 inline-flex shrink-0" />
+    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 inline-flex shrink-0" />
   );
-  return <span className="h-2 w-2 rounded-full bg-amber-400 inline-flex shrink-0" />;
+  return <span className="h-2 w-2 rounded-full bg-warning inline-flex shrink-0" />;
 }
 
 function statusClasses(s: string) {
   switch (s.toLowerCase()) {
-    case "open":        return "bg-emerald-50 text-emerald-700 border-emerald-100";
-    case "closed":      return "bg-slate-100 text-slate-500 border-slate-200";
-    case "in_progress": return "bg-blue-50 text-blue-700 border-blue-100";
-    default:            return "bg-amber-50 text-amber-700 border-amber-100";
+    case "open":        return "bg-success-soft text-success border-success/20";
+    case "closed":      return "bg-muted text-muted-foreground border-border";
+    case "in_progress": return "bg-info-soft text-info border-info/20";
+    default:            return "bg-warning-soft text-warning border-warning/20";
   }
 }
 
@@ -35,8 +35,8 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
     <button
       onClick={onClick}
       className="w-full text-left group bg-card border border-border/60 rounded-2xl px-4 py-3.5
-        hover:border-[#BCCCDC] hover:shadow-sm active:scale-[0.995]
-        transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9EAFD]"
+        hover:border-input hover:shadow-sm active:scale-[0.995]
+        transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
@@ -44,7 +44,7 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
             <StatusDot status={ticket.status} />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm text-foreground leading-snug line-clamp-1 group-hover:text-[#141f59] transition-colors">
+            <p className="font-semibold text-sm text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
               {ticket.title}
             </p>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed line-clamp-2">
@@ -59,7 +59,7 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
           </Badge>
           {/* Chevron affordance */}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            className="text-muted-foreground/40 group-hover:text-[#141f59]/50 transition-colors mt-0.5 shrink-0">
+            className="text-muted-foreground/40 group-hover:text-primary/60 transition-colors mt-0.5 shrink-0">
             <path d="M9 18l6-6-6-6"/>
           </svg>
         </div>

@@ -34,26 +34,26 @@ export default function VerificationBanner({ email }: { email: string }) {
   }
 
   return (
-    <div className="mb-6 rounded-2xl bg-[#D9EAFD] border border-[#BCCCDC] px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-up">
+    <div className="mb-6 rounded-2xl bg-secondary border border-input px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-up">
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <div className="shrink-0 mt-0.5 w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#141f59]">
+        <div className="shrink-0 mt-0.5 w-8 h-8 rounded-full bg-card/60 flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-foreground">
             <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#141f59]">Set your password to post tickets</p>
-          <p className="text-xs text-[#9AA6B2] mt-0.5">
+          <p className="text-sm font-semibold text-foreground">Set your password to post tickets</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Check your inbox for the setup email we sent to <strong>{email}</strong>.{" "}
-            {sent && <span className="text-[#141f59] font-semibold">A new setup email has been sent!</span>}
-            {error && <span className="text-red-600">{error}</span>}
+            {sent && <span className="text-foreground font-semibold">A new setup email has been sent!</span>}
+            {error && <span className="text-destructive">{error}</span>}
           </p>
         </div>
       </div>
       <button
         onClick={handleResend}
         disabled={loading || remaining > 0}
-        className="shrink-0 text-xs font-semibold px-4 py-2 rounded-xl bg-[#141f59] text-white hover:bg-[#1a2870] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="shrink-0 text-xs font-semibold px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {loading
           ? "Sending…"

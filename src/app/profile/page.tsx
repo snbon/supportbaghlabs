@@ -4,12 +4,15 @@ import { getProfile, getSession } from "@/lib/dal";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import ProfileForm from "@/components/ProfileForm";
+import AppearanceCard from "@/components/AppearanceCard";
+import ThemeSync from "@/components/ThemeSync";
 
 export default async function ProfilePage() {
   const session = await getSession();
   if (!session) redirect("/");
 
   const profile = await getProfile(session.userId);
+  const theme = profile?.theme ?? "system";
   const name = profile?.company_name || "Your Account";
   const initials = profile?.company_name
     ? profile.company_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
@@ -17,6 +20,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <ThemeSync theme={theme} />
       <header className="sticky top-0 z-20 bg-card/95 border-b border-border/60 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -59,6 +63,8 @@ export default async function ProfilePage() {
             <p className="text-sm text-muted-foreground mb-5">Choose a new password for your account.</p>
             <ProfileForm />
           </div>
+
+          <AppearanceCard initialTheme={theme} />
         </div>
       </main>
     </div>

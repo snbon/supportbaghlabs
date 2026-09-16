@@ -48,12 +48,12 @@ export default function AddProjectDialog({ clientId, clientName }: AddProjectDia
 
           <div className="space-y-4 py-2">
             {state.success && (
-              <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700">
+              <div className="rounded-xl bg-success-soft border border-success/20 px-4 py-3 text-sm text-success">
                 {state.message || "Project added!"}
               </div>
             )}
             {state.error && (
-              <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
                 {state.error}
               </div>
             )}

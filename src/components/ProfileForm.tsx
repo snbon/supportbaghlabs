@@ -14,18 +14,18 @@ export default function ProfileForm() {
   return (
     <form action={formAction} className="space-y-4">
       {state.error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+        <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}
       {state.success && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-xl bg-success-soft border border-success/20 px-4 py-3 text-sm text-success">
           {state.message}
         </div>
       )}
 
       <div className="space-y-1.5">
-        <Label htmlFor="pf-password" className="text-sm font-semibold text-[#141f59]">New password</Label>
+        <Label htmlFor="pf-password" className="text-sm font-semibold text-foreground">New password</Label>
         <Input
           id="pf-password"
           name="password"
@@ -34,12 +34,12 @@ export default function ProfileForm() {
           required
           minLength={8}
           autoFocus
-          className="h-10 bg-[#F8FAFC] border-[#BCCCDC] text-[#141f59] placeholder:text-[#9AA6B2] focus:border-[#141f59] focus:ring-[#D9EAFD]"
+          className="h-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="pf-confirm" className="text-sm font-semibold text-[#141f59]">Confirm password</Label>
+        <Label htmlFor="pf-confirm" className="text-sm font-semibold text-foreground">Confirm password</Label>
         <Input
           id="pf-confirm"
           name="confirm"
@@ -47,13 +47,13 @@ export default function ProfileForm() {
           placeholder="Repeat your password"
           required
           minLength={8}
-          className="h-10 bg-[#F8FAFC] border-[#BCCCDC] text-[#141f59] placeholder:text-[#9AA6B2] focus:border-[#141f59] focus:ring-[#D9EAFD]"
+          className="h-10 bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
         />
       </div>
 
       <Button
         type="submit"
-        className="w-full h-10 bg-[#141f59] hover:bg-[#1a2870] text-white font-semibold border-0"
+        className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold border-0"
         disabled={isPending}
       >
         {isPending ? "Saving…" : "Update password →"}

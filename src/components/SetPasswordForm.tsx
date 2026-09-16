@@ -15,7 +15,7 @@ export default function SetPasswordForm() {
   return (
     <form action={formAction} className="space-y-4">
       {state.error && (
-        <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+        <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}

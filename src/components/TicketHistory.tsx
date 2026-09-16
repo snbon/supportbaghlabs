@@ -28,7 +28,7 @@ export default function TicketHistory({ tickets, onTicketClick }: TicketHistoryP
         {hasClosedTickets && (
           <button
             onClick={() => setHideClosed((v) => !v)}
-            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-[#BCCCDC] text-[#9AA6B2] hover:border-[#141f59]/30 hover:text-[#141f59] transition-colors"
+            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-input text-muted-foreground hover:border-ring/40 hover:text-foreground transition-colors"
           >
             {hideClosed ? (
               <>

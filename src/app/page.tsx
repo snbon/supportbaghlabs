@@ -6,6 +6,7 @@ import LoginForm from "@/components/LoginForm";
 import SuperadminDashboard from "@/components/SuperadminDashboard";
 import ClientDashboard from "@/components/ClientDashboard";
 import DashboardSkeleton from "@/components/DashboardSkeleton";
+import ThemeSync from "@/components/ThemeSync";
 
 interface PageProps {
   searchParams: Promise<{ project?: string; token_hash?: string; type?: string; next?: string }>;
@@ -37,6 +38,12 @@ async function Dashboard({
 }: { userId: string; email: string; defaultProjectId?: string }) {
   const data = await getClientDashboardData(userId);
   if (!data) return <LoginForm />;
-  if (data.is_superadmin) return <SuperadminDashboard />;
-  return <ClientDashboard data={data} email={email} defaultProjectId={defaultProjectId} />;
+  return (
+    <>
+      <ThemeSync theme={data.theme} />
+      {data.is_superadmin
+        ? <SuperadminDashboard />
+        : <ClientDashboard data={data} email={email} defaultProjectId={defaultProjectId} />}
+    </>
+  );
 }
