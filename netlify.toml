@@ -2,6 +2,11 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  # Turbopack's persistent build cache records the build environment. It never
+  # ships to the deployed site, so exclude it from Netlify's secrets scanner.
+  SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**,.next/cache/**"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
