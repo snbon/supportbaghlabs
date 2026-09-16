@@ -2,8 +2,8 @@ import Link from "next/link";
 import { getSuperadminDashboardData } from "@/lib/dal";
 import InviteClientDialog from "@/components/InviteClientDialog";
 import SuperadminDashboardShell from "@/components/SuperadminDashboardShell";
-import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import SignOutButton from "@/components/SignOutButton";
 
 export default async function SuperadminDashboard() {
   const profiles = await getSuperadminDashboardData();
@@ -29,12 +29,9 @@ export default async function SuperadminDashboard() {
           </Link>
         </nav>
         <div className="px-3 py-4 border-t border-sidebar-border">
-          <form action={logout}>
-            <Button variant="ghost" size="sm" type="submit"
-              className="w-full justify-start text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent gap-2 text-xs">
-              <SignOutIcon /> Sign out
-            </Button>
-          </form>
+          <SignOutButton className="w-full justify-start text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent gap-2 text-xs">
+            <SignOutIcon /> Sign out
+          </SignOutButton>
         </div>
       </aside>
 
@@ -56,11 +53,7 @@ export default async function SuperadminDashboard() {
                 <Link href="/profile" aria-label="Account settings">
                   <Button variant="ghost" size="icon-sm" className="text-muted-foreground"><SettingsIcon /></Button>
                 </Link>
-                <form action={logout}>
-                  <Button variant="ghost" size="sm" type="submit" className="text-muted-foreground text-xs">
-                    Sign out
-                  </Button>
-                </form>
+                <SignOutButton className="text-muted-foreground text-xs" />
               </div>
             </div>
           </div>

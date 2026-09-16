@@ -2,8 +2,7 @@ import Link from "next/link";
 import { stripTickets, type ProfileWithProjects, type Project, type Ticket } from "@/lib/types";
 import ClientDashboardShell from "@/components/ClientDashboardShell";
 import VerificationBanner from "@/components/VerificationBanner";
-import { logout } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import SignOutButton from "@/components/SignOutButton";
 
 interface ClientDashboardProps {
   data: ProfileWithProjects;
@@ -47,11 +46,7 @@ export default function ClientDashboard({ data, email, defaultProjectId }: Clien
                 <span className="text-[10px] font-extrabold text-secondary-foreground">{initials}</span>
               </div>
             </Link>
-            <form action={logout}>
-              <Button variant="ghost" size="sm" type="submit" className="text-muted-foreground text-xs">
-                Sign out
-              </Button>
-            </form>
+            <SignOutButton className="text-muted-foreground text-xs" />
           </div>
         </div>
       </header>

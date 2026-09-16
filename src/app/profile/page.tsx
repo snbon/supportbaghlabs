@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getProfile, getSession } from "@/lib/dal";
-import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import SignOutButton from "@/components/SignOutButton";
 import ProfileForm from "@/components/ProfileForm";
 import AppearanceCard from "@/components/AppearanceCard";
 import ThemeSync from "@/components/ThemeSync";
@@ -39,11 +39,7 @@ export default async function ProfilePage() {
                 ← Dashboard
               </Button>
             </Link>
-            <form action={logout}>
-              <Button variant="ghost" size="sm" type="submit" className="text-muted-foreground text-xs">
-                Sign out
-              </Button>
-            </form>
+            <SignOutButton className="text-muted-foreground text-xs" />
           </div>
         </div>
       </header>

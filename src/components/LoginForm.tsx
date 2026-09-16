@@ -170,18 +170,18 @@ export default function LoginForm() {
           <Image
             src="/brand/baghlabs_black.png"
             alt="Baghlabs"
-            width={70}
-            height={70}
+            width={162}
+            height={60}
             priority
-            className="mb-4 size-[70px] drop-shadow-sm dark:hidden"
+            className="mb-4 h-[60px] w-auto drop-shadow-sm dark:hidden"
           />
           <Image
             src="/brand/baghlabs_white.png"
             alt="Baghlabs"
-            width={70}
-            height={70}
+            width={162}
+            height={60}
             priority
-            className="mb-4 size-[70px] drop-shadow-sm hidden dark:block"
+            className="mb-4 h-[60px] w-auto drop-shadow-sm hidden dark:block"
           />
           <p className="text-muted-foreground text-sm mt-1 font-medium">Support Portal</p>
         </div>
