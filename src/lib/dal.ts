@@ -47,6 +47,15 @@ export async function isSuperadmin(userId: string): Promise<boolean> {
   return profile?.is_superadmin === true;
 }
 
+/** True when `userId` is a superadmin of the workspace that owns `clientId`. */
+export async function isWorkspaceAdminOf(userId: string, clientId: string): Promise<boolean> {
+  const me = await getProfile(userId);
+  if (!me?.is_superadmin) return false;
+  const { data: client } = await createAdminClient()
+    .from("profiles").select("workspace").eq("id", clientId).maybeSingle<{ workspace: string }>();
+  return client?.workspace === me.workspace;
+}
+
 /** Session only when the caller is a superadmin; otherwise null. */
 export async function getSuperadminSession(): Promise<Session | null> {
   const session = await getSession();
@@ -74,12 +83,13 @@ export const getClientDashboardData = cache(
   }
 );
 
-/** Everything the superadmin dashboard needs, in one round trip. */
-export const getSuperadminDashboardData = cache(async (): Promise<ProfileWithProjects[]> => {
+/** Everything the superadmin dashboard needs (clients of one workspace), in one round trip. */
+export const getSuperadminDashboardData = cache(async (workspace: string): Promise<ProfileWithProjects[]> => {
   const { data, error } = await createAdminClient()
     .from("profiles")
     .select(DASHBOARD_SELECT)
     .eq("is_superadmin", false)
+    .eq("workspace", workspace)
     .order("company_name")
     .order("project_name", { referencedTable: "projects" })
     .order("created_at", { ascending: false, referencedTable: "projects.tickets" })
@@ -113,7 +123,7 @@ export async function getTicketForUser(
   if (!data?.project) return null;
 
   const { project, ...ticket } = data;
-  if (project.client_id !== session.userId && !(await isSuperadmin(session.userId))) {
+  if (project.client_id !== session.userId && !(await isWorkspaceAdminOf(session.userId, project.client_id))) {
     return null;
   }
   return { ticket, project };
