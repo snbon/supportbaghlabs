@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { getSuperadminDashboardData } from "@/lib/dal";
+import { getProfile, getSession, getSuperadminDashboardData } from "@/lib/dal";
+import { redirect } from "next/navigation";
 import InviteClientDialog from "@/components/InviteClientDialog";
 import SuperadminDashboardShell from "@/components/SuperadminDashboardShell";
 import { Button } from "@/components/ui/button";
 import SignOutButton from "@/components/SignOutButton";
 
 export default async function SuperadminDashboard() {
-  const profiles = await getSuperadminDashboardData();
+  const session = await getSession();
+  const me = session ? await getProfile(session.userId) : null;
+  if (!me?.is_superadmin) redirect("/");
+  const profiles = await getSuperadminDashboardData(me.workspace);
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">

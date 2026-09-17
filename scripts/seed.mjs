@@ -52,6 +52,8 @@ const gh = (path, init = {}) =>
 
 const password = () => "Seed-" + randomBytes(9).toString("base64url");
 
+const WORKSPACE = "seed";
+
 async function resetUser(email, { company, superadmin, pwd }) {
   const { data } = await db.auth.admin.listUsers({ perPage: 1000 });
   for (const u of data.users.filter((u) => u.email === email)) {
@@ -60,7 +62,7 @@ async function resetUser(email, { company, superadmin, pwd }) {
   const { data: created, error } = await db.auth.admin.createUser({ email, password: pwd, email_confirm: true });
   if (error) throw error;
   const { error: pErr } = await db.from("profiles")
-    .insert({ id: created.user.id, company_name: company, is_superadmin: superadmin, email });
+    .insert({ id: created.user.id, company_name: company, is_superadmin: superadmin, email, workspace: WORKSPACE });
   if (pErr) throw pErr;
   return created.user.id;
 }

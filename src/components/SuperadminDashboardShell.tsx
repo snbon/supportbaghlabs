@@ -19,7 +19,12 @@ export default function SuperadminDashboardShell({ profiles }: Props) {
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
   useEffect(() => { setTickets(initialTickets); }, [initialTickets]);
 
-  const onEvent = useCallback((e: TicketEvent) => setTickets((prev) => applyTicketEvent(prev, e)), []);
+  const projectIdKey = profiles.flatMap((p) => p.projects.map((pr) => pr.id)).join(",");
+  const onEvent = useCallback((e: TicketEvent) => {
+    const own = new Set(projectIdKey.split(","));
+    if (e.type !== "DELETE" && !own.has(e.ticket.project_id)) return;
+    setTickets((prev) => applyTicketEvent(prev, e));
+  }, [projectIdKey]);
   useTicketChanges(onEvent);
 
   const clients: ClientWithStats[] = profiles.map((profile) => {

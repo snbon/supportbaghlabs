@@ -15,6 +15,8 @@ export interface Profile {
   /** Denormalised from auth.users.email_confirmed_at via trigger. */
   email_verified: boolean;
   theme: Theme;
+  /** Superadmins only see clients in their own workspace. */
+  workspace: string;
   created_at: string;
 }
 

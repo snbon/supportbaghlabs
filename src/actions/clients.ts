@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getSession, getSuperadminSession, isSuperadmin } from "@/lib/dal";
+import { getProfile, getSession, getSuperadminSession, isWorkspaceAdminOf } from "@/lib/dal";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   addProjectSchema,
@@ -36,7 +36,10 @@ export async function inviteClient(
   _prev: ClientActionState,
   formData: FormData
 ): Promise<ClientActionState> {
-  if (!(await getSuperadminSession())) return { error: "Unauthorized." };
+  const session = await getSuperadminSession();
+  if (!session) return { error: "Unauthorized." };
+  const me = await getProfile(session.userId);
+  if (!me) return { error: "Unauthorized." };
 
   const parsed = parseForm(inviteClientSchema, formData);
   if (!parsed.success) return { error: parsed.error };
@@ -60,7 +63,7 @@ export async function inviteClient(
   // 2. Profile row (email is denormalised here; the auth trigger keeps it fresh)
   const { error: profileError } = await admin
     .from("profiles")
-    .insert({ id: userId, company_name: companyName, is_superadmin: false, email });
+    .insert({ id: userId, company_name: companyName, is_superadmin: false, email, workspace: me.workspace });
   if (profileError) {
     console.error("[inviteClient] profile insert:", profileError.message);
     await admin.auth.admin.deleteUser(userId);
@@ -113,7 +116,8 @@ export async function addProject(
   _prev: ClientActionState,
   formData: FormData
 ): Promise<ClientActionState> {
-  if (!(await getSuperadminSession())) return { error: "Unauthorized." };
+  const session = await getSuperadminSession();
+  if (!session) return { error: "Unauthorized." };
 
   const parsed = parseForm(addProjectSchema, formData);
   if (!parsed.success) return { error: parsed.error };
@@ -123,7 +127,7 @@ export async function addProject(
 
   const { data: client } = await admin
     .from("profiles").select("id").eq("id", clientId).eq("is_superadmin", false).maybeSingle();
-  if (!client) return { error: "Client not found." };
+  if (!client || !(await isWorkspaceAdminOf(session.userId, clientId))) return { error: "Client not found." };
 
   const { data: projectData, error } = await admin
     .from("projects")
@@ -160,19 +164,20 @@ export async function resendInvitation(
   const { email } = parsed.data;
 
   const admin = createAdminClient();
-  const superadmin = await isSuperadmin(session.userId);
-  if (!superadmin && email !== session.email.toLowerCase()) return { error: "Unauthorized." };
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id, company_name")
+    .eq("email", email)
+    .maybeSingle<{ id: string; company_name: string }>();
+  if (!profile) return { error: "No account found for this email." };
+
+  const isSelf = email === session.email.toLowerCase();
+  if (!isSelf && !(await isWorkspaceAdminOf(session.userId, profile.id))) return { error: "Unauthorized." };
 
   if (!(await rateLimit(`resend:${email}`, 3, 60 * 60))) {
     return { error: "Too many emails sent to this address. Try again later." };
   }
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("company_name")
-    .eq("email", email)
-    .maybeSingle<{ company_name: string }>();
-  if (!profile) return { error: "No account found for this email." };
 
   const setupLink = await generateSetupLink(admin, email);
   if (!setupLink) return { error: "Could not generate a setup link. Please try again." };
